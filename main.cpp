@@ -100,8 +100,22 @@ int main() {
       return result;
     });
 
-    auto pipeline = input | square | reverse | to_string;
-    std::cout << pipeline() << "\n";
+    auto pipeline = square | reverse | to_string;
+
+    // apply for a single input
+    std::cout << pipeline(std::vector<int>{1, 2, 3, 4, 5}) << "\n";
+
+    // apply to a vector of inputs
+    std::vector<std::vector<int>> inputs = {
+      {1, 2, 3, 4, 5},
+      {6, 7, 8, 9, 10},
+      {11, 12, 13, 14, 15}
+    };
+    std::vector<std::string> result{3};
+    std::transform(inputs.begin(), inputs.end(), result.begin(), pipeline);
+    for (auto r : result) {
+      std::cout << r << "\n";
+    }
   }
 
   // auto pipeline = add | square;
