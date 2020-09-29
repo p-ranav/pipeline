@@ -5,7 +5,7 @@
 namespace pipeline {
 
 template <typename Fn, typename... Args>
-class fn;
+class bind;
 
 template <typename T1, typename T2>
 class fork_pair {
@@ -121,8 +121,8 @@ public:
 
   template <typename F, typename... Args>
   static constexpr bool is_invocable_on() {
-    if constexpr (details::is_specialization<F, fn>::value) {
-      // F is an `fn` type
+    if constexpr (details::is_specialization<F, bind>::value) {
+      // F is an `bind` type
       return F::template is_invocable_on<Args...>();
     }
     else {

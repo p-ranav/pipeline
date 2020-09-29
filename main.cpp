@@ -1,4 +1,4 @@
-#include <pipeline/fn.hpp>
+#include <pipeline/bind.hpp>
 #include <fstream>
 #include <optional>
 #include <sstream>
@@ -7,25 +7,32 @@ using namespace pipeline;
 int main() {
  
   {
-    auto add = fn([](int a, int b) { return a + b; });
-    auto square = fn([](int a) { return a * a; });
-    auto pretty_print_square = fn([](int result, std::string msg = "Result = ") { std::cout << msg << std::to_string(result); });
+    auto add = bind([](int a, int b) { return a + b; });
+    auto square = bind([](int a) { return a * a; });
+    auto pretty_print_square = bind([](int result, std::string msg = "Result = ") { std::cout << msg << std::to_string(result) << "\n"; });
 
     auto pipeline = add | square | pretty_print_square;
     pipeline(5, 10);
   }
 
-  std::cout << std::endl;
+  // Using `pipe(...)` function
+  {
+    auto add = bind([](int a, int b) { return a + b; });
+    auto square = bind([](int a) { return a * a; });
+    auto pretty_print_square = bind([](int result, std::string msg = "Result = ") { std::cout << msg << std::to_string(result) << "\n"; });
 
+    auto pipeline = pipe(add, square, pretty_print_square);
+    pipeline(15, 23);
+  }
 
   {
-    auto input = fn([]() { return std::vector<int>{1, 2, 3, 4, 5}; });
-    auto square = fn([](const std::vector<int>& input) {
+    auto input = bind([]() { return std::vector<int>{1, 2, 3, 4, 5}; });
+    auto square = bind([](const std::vector<int>& input) {
       std::vector<int> result;
       for (auto i : input) result.push_back(i * i);
       return result;
     });
-    auto reverse = fn([](const std::vector<int>& input) {
+    auto reverse = bind([](const std::vector<int>& input) {
       std::vector<int> result;
       for (auto i = input.rbegin(); i != input.rend(); i++) {
         result.push_back(*i);
@@ -33,7 +40,7 @@ int main() {
       return result;
     });
 
-    auto to_string = fn([](const std::vector<int>& input) {
+    auto to_string = bind([](const std::vector<int>& input) {
       std::string result = "{ ";
       for (auto i : input) {
         result += std::to_string(i) + " ";
@@ -61,16 +68,16 @@ int main() {
   }
 
   {
-    auto square = fn([](auto n) { 
+    auto square = bind([](auto n) { 
       std::transform(n.begin(), n.end(), n.begin(), [](auto i) { return i * i; });
       return n;
     });
 
-    auto mean = fn([](auto n) {
+    auto mean = bind([](auto n) {
       return std::accumulate(n.begin(), n.end(), 0) / n.size();
     });
 
-    auto root = fn([](auto n) {
+    auto root = bind([](auto n) {
       return std::sqrt(n);
     });
 
@@ -79,29 +86,29 @@ int main() {
   }
 
   // Unpack fork result (which is a tuple) 
-  // and call next fn
+  // and call next bind
   {
-    auto square = fn([](int a) { return a * a; });
-    auto cube = fn([](int a) { return a * a * a; });
+    auto square = bind([](int a) { return a * a; });
+    auto cube = bind([](int a) { return a * a * a; });
     auto pipeline = 
       square
       | (square & cube)
-      | fn([](auto square_result, auto cube_result) { 
+      | bind([](auto square_result, auto cube_result) { 
           std::cout << square_result << " " << cube_result << "\n"; 
         });
     pipeline(5);
   }
 
   // Unpack fork result (which is a tuple) 
-  // and call next fn
+  // and call next bind
   {
-    auto add_3 = fn([](int a) { return a + 3; });
-    auto square = fn([](int a) { return a * a; });
-    auto cube = fn([](int a) { return a * a * a; });
+    auto add_3 = bind([](int a) { return a + 3; });
+    auto square = bind([](int a) { return a * a; });
+    auto cube = bind([](int a) { return a * a * a; });
     auto pipeline = 
       square
       | fork(add_3, square, cube)
-      | fn([](auto offset, auto square, auto cube) { 
+      | bind([](auto offset, auto square, auto cube) { 
           std::cout << offset << " " << square << " " << cube << "\n"; 
         })
       ;
@@ -109,15 +116,15 @@ int main() {
   }
 
   // Unpack fork result (which is a tuple) 
-  // and call next fn
+  // and call next bind
   {
-    auto add_3 = fn([](int a) { return a + 3; });
-    auto square = fn([](int a) { return a * a; });
-    auto cube = fn([](int a) { return a * a * a; });
+    auto add_3 = bind([](int a) { return a + 3; });
+    auto square = bind([](int a) { return a * a; });
+    auto cube = bind([](int a) { return a * a * a; });
     auto pipeline = 
       square
       | (add_3 & square & cube)
-      | fn([](auto offset, auto square, auto cube) { 
+      | bind([](auto offset, auto square, auto cube) { 
           std::cout << offset << " " << square << " " << cube << "\n"; 
         })
       ;
@@ -125,15 +132,15 @@ int main() {
   }
 
   // Keep fork result as a tuple
-  // and call next fn
+  // and call next bind
   {
-    auto add_10 = fn([](int a) { return a + 10; });
-    auto square = fn([](int a) { return a * a; });
-    auto cube = fn([](int a) { return a * a * a; });
+    auto add_10 = bind([](int a) { return a + 10; });
+    auto square = bind([](int a) { return a * a; });
+    auto cube = bind([](int a) { return a * a * a; });
     auto pipeline = 
       square
       | ((add_10 | square) & square & cube)
-      | fn([](auto packed_result) { 
+      | bind([](auto packed_result) { 
           std::cout << std::get<0>(packed_result) << " " << std::get<1>(packed_result) << " " << std::get<2>(packed_result)<< "\n"; 
         })
       ;
@@ -142,9 +149,9 @@ int main() {
 
   // Piping a tuple
   {
-    auto make_tuple = fn([]() { return std::make_tuple(5, 3.14f, std::string{"Hello World"}); });
+    auto make_tuple = bind([]() { return std::make_tuple(5, 3.14f, std::string{"Hello World"}); });
 
-    auto print = fn([](auto int_a, auto float_b, auto str_c) {
+    auto print = bind([](auto int_a, auto float_b, auto str_c) {
       std::cout << int_a << " " << float_b << " " << str_c << "\n";
     });
 
@@ -153,28 +160,28 @@ int main() {
   }
 
   {
-    fn counter = [](auto n) { 
+    bind counter = [](auto n) { 
       static size_t previous{0};
       auto result = std::make_tuple(n, previous);
       previous = n;
       return result;
     };
 
-    fn print_n = [](auto n, auto prev) {
+    bind print_n = [](auto n, auto prev) {
       std::cout << "N = " << n << "\n";
       return n;
     };
 
-    fn print_prev = [](auto n, auto prev) {
+    bind print_prev = [](auto n, auto prev) {
       std::cout << "Prev = " << prev << "\n";
       return prev;
     };
 
-    fn print_result = [](auto n, auto prev) { 
+    bind print_result = [](auto n, auto prev) { 
       std::cout << "Stateful result = " << n << " - " << prev << "\n"; 
     };
 
-    fn print_result_2 = [](auto packed) {
+    bind print_result_2 = [](auto packed) {
       std::cout << "Stateful result = " << std::get<0>(packed) << " - " << std::get<1>(packed) << "\n"; 
     };
 
@@ -186,7 +193,7 @@ int main() {
 
 
   {
-    fn read_file = [](std::string_view filename = "main.cpp") {
+    bind read_file = [](std::string_view filename = "main.cpp") {
       std::string buffer;
 
       std::ifstream file(filename);
@@ -198,7 +205,7 @@ int main() {
       return buffer;
     };
 
-    fn read_next_line = [](auto contents) -> std::optional<std::string> {
+    bind read_next_line = [](auto contents) -> std::optional<std::string> {
       static std::istringstream f(contents);
       std::string line;    
       if (std::getline(f, line)) {
@@ -207,7 +214,7 @@ int main() {
       return {};
     };
 
-    fn print_line = [](auto line) { if (line.has_value()) std::cout << line.value() << "\n"; };
+    bind print_line = [](auto line) { if (line.has_value()) std::cout << line.value() << "\n"; };
 
     auto line_printer = read_file | read_next_line | print_line;
 

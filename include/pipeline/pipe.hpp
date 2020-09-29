@@ -4,7 +4,7 @@
 namespace pipeline {
 
 template <typename Fn, typename... Args>
-class fn;
+class bind;
 
 template <typename T1, typename T2>
 class fork_pair;
@@ -50,8 +50,8 @@ public:
 
   template <typename F, typename... Args>
   static constexpr bool is_invocable_on() {
-    if constexpr (details::is_specialization<F, fn>::value) {
-      // F is an `fn` type
+    if constexpr (details::is_specialization<F, bind>::value) {
+      // F is an `bind` type
       return F::template is_invocable_on<Args...>();
       // return std::is_invocable<F, Args...>::value;
     }
@@ -70,5 +70,15 @@ public:
     return fork_pair<pipe_pair<T1, T2>, T3>(*this, rhs);
   }
 };
+
+template <typename T1, typename T2>
+auto pipe(T1&& t1, T2&& t2) {
+  return pipe_pair<T1, T2>(std::forward<T1>(t1), std::forward<T2>(t2));
+}
+
+template <typename T1, typename T2, typename... T>
+auto pipe(T1&& t1, T2&& t2, T&&... args) {
+  return pipe(pipe<T1, T2>(std::forward<T1>(t1), std::forward<T2>(t2)), std::forward<T>(args)...);
+}
 
 }
