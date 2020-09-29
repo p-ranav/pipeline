@@ -6,22 +6,69 @@
 #include <type_traits>
 #include <vector>
 
+// is_tuple constexpr check
+template <typename> struct is_tuple: std::false_type {};
+template <typename... T> struct is_tuple<std::tuple<T...>>: std::true_type {};
+
 template <typename T1, typename T2>
 class pipe {
   T1 left_;
   T2 right_;
+
+  template <class F, size_t... Is>
+  constexpr auto index_apply_impl(F f, std::index_sequence<Is...>) {
+    return f(std::integral_constant<size_t, Is> {}...);
+  }
+
+  template <size_t N, class F>
+  constexpr auto index_apply(F f) {
+    return  index_apply_impl(f, std::make_index_sequence<N>{});
+  }
+
+  // Unpacks Tuple into a parameter pack
+  // Calls f(parameter_pack)
+  template <class Tuple, class F>
+  constexpr auto apply(Tuple t, F f) {
+    return index_apply<std::tuple_size<Tuple>{}>(
+      [&](auto... Is) { return f(std::get<Is>(t)...); }
+    );
+  }
 
 public:
   pipe(T1 left, T2 right) : left_(left), right_(right) {}
 
   template <typename... T>
   auto operator()(T&&... args) {
-    return right_(left_(std::forward<T>(args)...));
+    typedef typename std::result_of<T1(T...)>::type left_result;
+    if constexpr (is_tuple<left_result>::value) {
+      return apply(left_(std::forward<T>(args)...), right_);
+    } else {
+      return right_(left_(std::forward<T>(args)...));
+    }
   }
 
   template <typename T3>
   auto operator|(const T3& rhs) {
     return pipe<pipe<T1, T2>, T3>(*this, rhs);
+  }
+};
+
+template <typename T1, typename T2>
+class fork {
+  T1 left_;
+  T2 right_;
+
+public:
+  fork(T1 left, T2 right) : left_(left), right_(right) {}
+
+  template <typename... T>
+  auto operator()(T&&... args) {
+    return std::make_tuple(left_(std::forward<T>(args)...), right_(std::forward<T>(args)...));
+  }
+
+  template <typename T3>
+  auto operator|(const T3& rhs) {
+    return pipe<fork<T1, T2>, T3>(*this, rhs);
   }
 };
 
@@ -60,6 +107,21 @@ public:
   template <typename Fn2, typename... Args2>
   auto operator|(const fn<Fn2, Args2...>& rhs) {
     return pipe(*this, rhs);
+  }
+
+  template <typename T1, typename T2>
+  auto operator|(const pipe<T1, T2>& rhs) {
+    return pipe(*this, rhs);
+  }
+
+  template <typename T1, typename T2>
+  auto operator|(const fork<T1, T2>& rhs) {
+    return pipe(*this, rhs);
+  }
+
+  template <typename Fn2, typename... Args2>
+  auto operator&(const fn<Fn2, Args2...>& rhs) {
+    return fork(*this, rhs);
   }
 };
 
@@ -134,24 +196,18 @@ int main() {
     });
 
     auto rms = square | mean | root;
-    std::cout << rms(std::vector<int>{2, 4, 9, 10, 12});
-
+    std::cout << rms(std::vector<int>{2, 4, 9, 10, 12}) << "\n"; // 8.30662
   }
 
-  // auto pipeline = add | square;
-  // std::cout << pipeline();
-
-  // task sum([](int a, int b) -> int { return a + b; });
-  // std::cout << sum(1, 2) << "\n";
-
-  // task prod([](int a, int b, int c) -> int { return a * b * c; });
-  // std::cout << prod(1, 2, 3) << "\n";
-
-  // task greet([]() -> void { std::cout << "Hello World!\n"; });
-  // greet();
-
-  // task square([](int a) { return a * a; });
-
-  // pipeline p(sum, square);
-  // std::cout << p.get<0>()(5, 6) << "\n";
+  {
+    auto square = fn([](int a) { return a * a; });
+    auto cube = fn([](int a) { return a * a * a; });
+    auto pipeline = 
+      square
+      | (square & cube)
+      | fn([](auto square_result, auto cube_result) { 
+          std::cout << square_result << " " << cube_result << "\n"; 
+        });
+    pipeline(5);
+  }
 }
