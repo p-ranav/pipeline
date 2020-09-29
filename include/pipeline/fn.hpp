@@ -15,8 +15,8 @@ public:
   fn(Fn fn, Args... args): fn_(fn), args_(args...) {}
 
   template <typename... T>
-  auto operator()(T... left_args) {
-    return details::apply(std::tuple_cat(std::make_tuple(std::forward<T>(left_args)...), args_), fn_);
+  auto operator()(T&&... left_args) {
+    return details::apply(std::tuple_cat(std::forward_as_tuple(std::forward<T>(left_args)...), args_), fn_);
   }
 
   template <typename... A>

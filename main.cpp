@@ -129,12 +129,24 @@ int main() {
       std::cout << int_a << " " << float_b << " " << str_c << "\n";
     });
 
-    auto print_tuple = fn([](std::tuple<int, float, std::string> tup) {
-      std::cout << std::get<0>(tup) << " " << std::get<1>(tup) << " " << std::get<2>(tup)<< "\n"; 
+    auto pipeline = make_tuple | print;
+    pipeline();
+  }
+
+  // Mutating a reference
+  {
+    std::vector<int> numbers{1, 2, 3, 4, 5};
+
+    auto square = fn([](std::vector<int>& numbers) -> std::vector<int>& {
+      std::transform(numbers.begin(), numbers.end(), numbers.begin(), [](int n) { return n * n; });
+      return numbers;
     });
 
-    auto pipeline = make_tuple | (print & print);
-    pipeline();
-    print(15, 6.28f, "Goodbye!");
+    auto pipeline = square | square;
+    pipeline(numbers);
+    for (auto& n : numbers) {
+      std::cout << n << " ";
+    }
+    std::cout << "\n";
   }
 }
