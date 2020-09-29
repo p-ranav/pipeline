@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <functional>
 #include <iostream>
+#include <numeric>
 #include <tuple>
 #include <type_traits>
 #include <vector>
@@ -14,8 +15,8 @@ public:
   pipe(T1 left, T2 right) : left_(left), right_(right) {}
 
   template <typename... T>
-  auto operator()(T... args) {
-    return right_(left_(args...));
+  auto operator()(T&&... args) {
+    return right_(left_(std::forward<T>(args)...));
   }
 
   template <typename T3>
@@ -52,8 +53,8 @@ public:
   fn(Fn fn, Args... args): fn_(fn), args_(args...) {}
 
   template <typename... T>
-  auto operator()(T... left_args) {
-    return apply(std::tuple_cat(std::make_tuple(left_args...), args_), fn_);
+  auto operator()(T&&... left_args) {
+    return apply(std::tuple_cat(std::make_tuple(std::forward<T>(left_args)...), args_), fn_);
   }
   
   template <typename Fn2, typename... Args2>
@@ -67,7 +68,7 @@ int main() {
   {
     auto add = fn([](int a, int b) { return a + b; });
     auto square = fn([](int a) { return a * a; });
-    auto pretty_print_square = fn([](int result, std::string msg) { std::cout << msg << std::to_string(result); }, std::string{"Result = "});
+    auto pretty_print_square = fn([](int result, std::string msg = "Result = ") { std::cout << msg << std::to_string(result); });
 
     auto pipeline = add | square | pretty_print_square;
     pipeline(5, 10);
@@ -116,6 +117,25 @@ int main() {
     for (auto r : result) {
       std::cout << r << "\n";
     }
+  }
+
+  {
+    auto square = fn([](auto n) { 
+      std::transform(n.begin(), n.end(), n.begin(), [](auto i) { return i * i; });
+      return n;
+    });
+
+    auto mean = fn([](auto n) {
+      return std::accumulate(n.begin(), n.end(), 0) / n.size();
+    });
+
+    auto root = fn([](auto n) {
+      return std::sqrt(n);
+    });
+
+    auto rms = square | mean | root;
+    std::cout << rms(std::vector<int>{2, 4, 9, 10, 12});
+
   }
 
   // auto pipeline = add | square;
