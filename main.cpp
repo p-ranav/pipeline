@@ -132,21 +132,4 @@ int main() {
     auto pipeline = make_tuple | print;
     pipeline();
   }
-
-  // Mutating a reference
-  {
-    std::vector<int> numbers{1, 2, 3, 4, 5};
-
-    auto square = fn([](std::vector<int>& numbers) -> std::vector<int>& {
-      std::transform(numbers.begin(), numbers.end(), numbers.begin(), [](int n) { return n * n; });
-      return numbers;
-    });
-
-    auto pipeline = square | square;
-    pipeline(numbers);
-    for (auto& n : numbers) {
-      std::cout << n << " ";
-    }
-    std::cout << "\n";
-  }
 }
