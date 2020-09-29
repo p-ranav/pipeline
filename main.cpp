@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <functional>
 #include <iostream>
 #include <tuple>
@@ -12,19 +13,19 @@ class pipe {
 public:
   pipe(T1 left, T2 right) : left_(left), right_(right) {}
 
-  auto operator()() {
-    return right_(left_());
+  template <typename... T>
+  auto operator()(T... args) {
+    return right_(left_(args...));
   }
 
   template <typename T3>
   auto operator|(const T3& rhs) {
     return pipe<pipe<T1, T2>, T3>(*this, rhs);
   }
-
 };
 
 template <typename Fn, typename... Args>
-class bind {
+class fn {
   Fn fn_;
   std::tuple<Args...> args_;
 
@@ -48,39 +49,60 @@ class bind {
   }
 
 public:
-  bind(Fn fn, Args... args): fn_(fn), args_(args...) {}
-
-  auto operator()() {
-    return apply(args_, fn_);
-  }
+  fn(Fn fn, Args... args): fn_(fn), args_(args...) {}
 
   template <typename... T>
   auto operator()(T... left_args) {
     return apply(std::tuple_cat(std::make_tuple(left_args...), args_), fn_);
   }
   
-  template <typename T2>
-  auto operator|(const T2& rhs) {
+  template <typename Fn2, typename... Args2>
+  auto operator|(const fn<Fn2, Args2...>& rhs) {
     return pipe(*this, rhs);
-  }
-
-  constexpr Fn fn() const {
-    return fn_;
-  }
-
-  constexpr std::tuple<Args...> args() const {
-    return args_;
   }
 };
 
 int main() {
+ 
+  {
+    auto add = fn([](int a, int b) { return a + b; });
+    auto square = fn([](int a) { return a * a; });
+    auto pretty_print_square = fn([](int result, std::string msg) { std::cout << msg << std::to_string(result); }, std::string{"Result = "});
 
-  auto add = bind([](int a, int b) { return a + b; }, 5, 10);
-  auto square = bind([](int a) { return a * a; });
-  auto pretty_print_square = bind([](int result, std::string msg) { std::cout << msg << std::to_string(result); }, std::string{"Result = "});
+    auto pipeline = add | square | pretty_print_square;
+    pipeline(5, 10);
+  }
 
-  auto pipeline = add | square | pretty_print_square;
-  pipeline();
+  std::cout << std::endl;
+
+
+  {
+    auto input = fn([]() { return std::vector<int>{1, 2, 3, 4, 5}; });
+    auto square = fn([](const std::vector<int>& input) {
+      std::vector<int> result;
+      for (auto i : input) result.push_back(i * i);
+      return result;
+    });
+    auto reverse = fn([](const std::vector<int>& input) {
+      std::vector<int> result;
+      for (auto i = input.rbegin(); i != input.rend(); i++) {
+        result.push_back(*i);
+      }
+      return result;
+    });
+
+    auto to_string = fn([](const std::vector<int>& input) {
+      std::string result = "{ ";
+      for (auto i : input) {
+        result += std::to_string(i) + " ";
+      }
+      result += "}";
+      return result;
+    });
+
+    auto pipeline = input | square | reverse | to_string;
+    std::cout << pipeline() << "\n";
+  }
 
   // auto pipeline = add | square;
   // std::cout << pipeline();
