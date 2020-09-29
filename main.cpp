@@ -132,4 +132,36 @@ int main() {
     auto pipeline = make_tuple | print;
     pipeline();
   }
+
+  {
+    auto counter = fn([](auto n) { 
+      static size_t previous{0};
+      auto result = std::make_tuple(n, previous);
+      previous = n;
+      return result;
+    });
+
+    auto print_n = fn([](auto n, auto prev) {
+      std::cout << "N = " << n << "\n";
+      return n;
+    });
+
+    auto print_prev = fn([](auto n, auto prev) {
+      std::cout << "Prev = " << prev << "\n";
+      return prev;
+    });
+
+    auto print_result = fn([](auto n, auto prev) { 
+      std::cout << "Stateful result = " << n << " - " << prev << "\n"; 
+    });
+
+    auto print_result_2 = fn([](auto packed) {
+      std::cout << "Stateful result = " << std::get<0>(packed) << " - " << std::get<1>(packed) << "\n"; 
+    });
+
+    auto pipeline = counter | (print_n & print_prev) | print_result_2;
+    pipeline(5);
+    pipeline(10);
+    pipeline(15);
+  }
 }
