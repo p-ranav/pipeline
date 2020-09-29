@@ -1,4 +1,7 @@
 #include <pipeline/fn.hpp>
+#include <fstream>
+#include <optional>
+#include <sstream>
 using namespace pipeline;
 
 int main() {
@@ -134,34 +137,66 @@ int main() {
   }
 
   {
-    auto counter = fn([](auto n) { 
+    fn counter = [](auto n) { 
       static size_t previous{0};
       auto result = std::make_tuple(n, previous);
       previous = n;
       return result;
-    });
+    };
 
-    auto print_n = fn([](auto n, auto prev) {
+    fn print_n = [](auto n, auto prev) {
       std::cout << "N = " << n << "\n";
       return n;
-    });
+    };
 
-    auto print_prev = fn([](auto n, auto prev) {
+    fn print_prev = [](auto n, auto prev) {
       std::cout << "Prev = " << prev << "\n";
       return prev;
-    });
+    };
 
-    auto print_result = fn([](auto n, auto prev) { 
+    fn print_result = [](auto n, auto prev) { 
       std::cout << "Stateful result = " << n << " - " << prev << "\n"; 
-    });
+    };
 
-    auto print_result_2 = fn([](auto packed) {
+    fn print_result_2 = [](auto packed) {
       std::cout << "Stateful result = " << std::get<0>(packed) << " - " << std::get<1>(packed) << "\n"; 
-    });
+    };
 
-    auto pipeline = counter | (print_n & print_prev) | print_result_2;
+    auto pipeline = counter | /* fork */ (print_n & print_prev) | /* join */ print_result;
     pipeline(5);
     pipeline(10);
     pipeline(15);
+  }
+
+
+  {
+    fn read_file = [](std::string_view filename = "main.cpp") {
+      std::string buffer;
+
+      std::ifstream file(filename);
+      file.seekg(0, std::ios::end);
+      buffer.resize(file.tellg());
+      file.seekg(0);
+      file.read(buffer.data(), buffer.size());
+
+      return buffer;
+    };
+
+    fn read_next_line = [](auto contents) -> std::optional<std::string> {
+      static std::istringstream f(contents);
+      std::string line;    
+      if (std::getline(f, line)) {
+        return line;
+      }
+      return {};
+    };
+
+    fn print_line = [](auto line) { if (line.has_value()) std::cout << line.value() << "\n"; };
+
+    auto line_printer = read_file | read_next_line | print_line;
+
+    line_printer();
+    line_printer();
+    line_printer();
   }
 }
