@@ -8,7 +8,7 @@ template <typename Fn, typename... Args>
 class fn;
 
 template <typename T1, typename T2>
-class fork {
+class fork_pair {
   T1 left_;
   T2 right_;
 
@@ -50,7 +50,7 @@ public:
   typedef T1 left_type;
   typedef T2 right_type;
 
-  fork(T1 left, T2 right) : left_(left), right_(right) {}
+  fork_pair(T1 left, T2 right) : left_(left), right_(right) {}
 
   // output of fork is always a tuple
   // - a tuple of merged results of left and right
@@ -132,13 +132,23 @@ public:
 
   template <typename T3>
   auto operator|(const T3& rhs) {
-    return pipe<fork<T1, T2>, T3>(*this, rhs);
+    return pipe_pair<fork_pair<T1, T2>, T3>(*this, rhs);
   }
 
   template <typename T3>
   auto operator&(const T3& rhs) {
-    return fork<fork<T1, T2>, T3>(*this, rhs);
+    return fork_pair<fork_pair<T1, T2>, T3>(*this, rhs);
   }
 };
+
+template <typename T1, typename T2>
+auto fork(T1&& t1, T2&& t2) {
+  return fork_pair<T1, T2>(std::forward<T1>(t1), std::forward<T2>(t2));
+}
+
+template <typename T1, typename T2, typename... T>
+auto fork(T1&& t1, T2&& t2, T&&... args) {
+  return fork(fork<T1, T2>(std::forward<T1>(t1), std::forward<T2>(t2)), std::forward<T>(args)...);
+}
 
 }

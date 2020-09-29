@@ -26,22 +26,22 @@ public:
   
   template <typename Fn2, typename... Args2>
   auto operator|(const fn<Fn2, Args2...>& rhs) {
-    return pipe(*this, rhs);
+    return pipe_pair(*this, rhs);
   }
 
   template <typename T1, typename T2>
-  auto operator|(const pipe<T1, T2>& rhs) {
-    return pipe(*this, rhs);
+  auto operator|(const pipe_pair<T1, T2>& rhs) {
+    return pipe_pair(*this, rhs);
   }
 
   template <typename T1, typename T2>
-  auto operator|(const fork<T1, T2>& rhs) {
-    return pipe(*this, rhs);
+  auto operator|(const fork_pair<T1, T2>& rhs) {
+    return pipe_pair(*this, rhs);
   }
 
   template <typename Fn2, typename... Args2>
   auto operator&(const fn<Fn2, Args2...>& rhs) {
-    return fork(*this, rhs);
+    return fork_pair(*this, rhs);
   }
 };
 

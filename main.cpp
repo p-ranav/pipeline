@@ -100,6 +100,22 @@ int main() {
     auto cube = fn([](int a) { return a * a * a; });
     auto pipeline = 
       square
+      | fork(add_3, square, cube)
+      | fn([](auto offset, auto square, auto cube) { 
+          std::cout << offset << " " << square << " " << cube << "\n"; 
+        })
+      ;
+    pipeline(5);
+  }
+
+  // Unpack fork result (which is a tuple) 
+  // and call next fn
+  {
+    auto add_3 = fn([](int a) { return a + 3; });
+    auto square = fn([](int a) { return a * a; });
+    auto cube = fn([](int a) { return a * a * a; });
+    auto pipeline = 
+      square
       | (add_3 & square & cube)
       | fn([](auto offset, auto square, auto cube) { 
           std::cout << offset << " " << square << " " << cube << "\n"; 

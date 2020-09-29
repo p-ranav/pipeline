@@ -7,10 +7,10 @@ template <typename Fn, typename... Args>
 class fn;
 
 template <typename T1, typename T2>
-class fork;
+class fork_pair;
 
 template <typename T1, typename T2>
-class pipe {
+class pipe_pair {
   T1 left_;
   T2 right_;
 
@@ -18,7 +18,7 @@ public:
   typedef T1 left_type;
   typedef T2 right_type;
 
-  pipe(T1 left, T2 right) : left_(left), right_(right) {}
+  pipe_pair(T1 left, T2 right) : left_(left), right_(right) {}
 
   template <typename... T>
   auto operator()(T&&... args) {
@@ -62,12 +62,12 @@ public:
 
   template <typename T3>
   auto operator|(const T3& rhs) {
-    return pipe<pipe<T1, T2>, T3>(*this, rhs);
+    return pipe_pair<pipe_pair<T1, T2>, T3>(*this, rhs);
   }
 
   template <typename T3>
   auto operator&(const T3& rhs) {
-    return fork<pipe<T1, T2>, T3>(*this, rhs);
+    return fork_pair<pipe_pair<T1, T2>, T3>(*this, rhs);
   }
 };
 
