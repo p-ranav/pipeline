@@ -6,33 +6,42 @@
 #include <type_traits>
 #include <vector>
 
+namespace pipeline {
+
+namespace details {
+
 // is_tuple constexpr check
 template <typename> struct is_tuple: std::false_type {};
 template <typename... T> struct is_tuple<std::tuple<T...>>: std::true_type {};
+
+template <class F, size_t... Is>
+constexpr auto index_apply_impl(F f, std::index_sequence<Is...>) {
+  return f(std::integral_constant<size_t, Is> {}...);
+}
+
+template <size_t N, class F>
+constexpr auto index_apply(F f) {
+  return  index_apply_impl(f, std::make_index_sequence<N>{});
+}
+
+// Unpacks Tuple into a parameter pack
+// Calls f(parameter_pack)
+template <class Tuple, class F>
+constexpr auto apply(Tuple t, F f) {
+  return index_apply<std::tuple_size<Tuple>{}>(
+    [&](auto... Is) { return f(std::get<Is>(t)...); }
+  );
+}
+
+}
+
+template <typename T1, typename T2>
+class fork;
 
 template <typename T1, typename T2>
 class pipe {
   T1 left_;
   T2 right_;
-
-  template <class F, size_t... Is>
-  constexpr auto index_apply_impl(F f, std::index_sequence<Is...>) {
-    return f(std::integral_constant<size_t, Is> {}...);
-  }
-
-  template <size_t N, class F>
-  constexpr auto index_apply(F f) {
-    return  index_apply_impl(f, std::make_index_sequence<N>{});
-  }
-
-  // Unpacks Tuple into a parameter pack
-  // Calls f(parameter_pack)
-  template <class Tuple, class F>
-  constexpr auto apply(Tuple t, F f) {
-    return index_apply<std::tuple_size<Tuple>{}>(
-      [&](auto... Is) { return f(std::get<Is>(t)...); }
-    );
-  }
 
 public:
   pipe(T1 left, T2 right) : left_(left), right_(right) {}
@@ -40,8 +49,21 @@ public:
   template <typename... T>
   auto operator()(T&&... args) {
     typedef typename std::result_of<T1(T...)>::type left_result;
-    if constexpr (is_tuple<left_result>::value) {
-      return apply(left_(std::forward<T>(args)...), right_);
+
+    // check if left_ result is a tuple
+    if constexpr (details::is_tuple<left_result>::value) {
+      // left_ result is a tuple
+      // check if right_ takes a tuple
+      if constexpr (std::is_invocable<typename T2::function_type, left_result>::value) {
+        // right_ does take a tuple - it is invocable
+        // call right_(left_result)s
+        return right_(left_(std::forward<T>(args)...));
+      }
+      else {
+        // right_ does not take a tuple
+        // Unpack tuple into a parameter list and call right_(...)
+        return details::apply(left_(std::forward<T>(args)...), right_);
+      }
     } else {
       return right_(left_(std::forward<T>(args)...));
     }
@@ -63,12 +85,44 @@ public:
 
   template <typename... T>
   auto operator()(T&&... args) {
-    return std::make_tuple(left_(std::forward<T>(args)...), right_(std::forward<T>(args)...));
+    typedef typename std::result_of<T1(T...)>::type left_result;
+    typedef typename std::result_of<T2(T...)>::type right_result;
+
+    if constexpr (details::is_tuple<left_result>::value) {
+      if constexpr (details::is_tuple<right_result>::value) {
+        // both results are tuples
+        // unpack both results and pack as tuple the concat of each result
+        return std::tuple_cat(
+          left_(std::forward<T>(args)...),
+          right_(std::forward<T>(args)...)
+        );
+      } else {
+        // left result alone is a tuple
+        return std::tuple_cat(
+          left_(std::forward<T>(args)...),
+          std::make_tuple(right_(std::forward<T>(args)...))
+        );
+      }
+    }
+    else if constexpr (details::is_tuple<right_result>::value) {
+      return std::tuple_cat(
+        std::make_tuple(left_(std::forward<T>(args)...)),
+        right_(std::forward<T>(args)...)
+      );
+    }
+    else {
+      return std::make_tuple(left_(std::forward<T>(args)...), right_(std::forward<T>(args)...));
+    }
   }
 
   template <typename T3>
   auto operator|(const T3& rhs) {
     return pipe<fork<T1, T2>, T3>(*this, rhs);
+  }
+
+  template <typename T3>
+  auto operator&(const T3& rhs) {
+    return fork<fork<T1, T2>, T3>(*this, rhs);
   }
 };
 
@@ -77,31 +131,14 @@ class fn {
   Fn fn_;
   std::tuple<Args...> args_;
 
-  template <class F, size_t... Is>
-  constexpr auto index_apply_impl(F f, std::index_sequence<Is...>) {
-    return f(std::integral_constant<size_t, Is> {}...);
-  }
-
-  template <size_t N, class F>
-  constexpr auto index_apply(F f) {
-    return  index_apply_impl(f, std::make_index_sequence<N>{});
-  }
-
-  // Unpacks Tuple into a parameter pack
-  // Calls f(parameter_pack)
-  template <class Tuple, class F>
-  constexpr auto apply(Tuple t, F f) {
-    return index_apply<std::tuple_size<Tuple>{}>(
-      [&](auto... Is) { return f(std::get<Is>(t)...); }
-    );
-  }
-
 public:
+  typedef Fn function_type;
+
   fn(Fn fn, Args... args): fn_(fn), args_(args...) {}
 
   template <typename... T>
   auto operator()(T&&... left_args) {
-    return apply(std::tuple_cat(std::make_tuple(std::forward<T>(left_args)...), args_), fn_);
+    return details::apply(std::tuple_cat(std::make_tuple(std::forward<T>(left_args)...), args_), fn_);
   }
   
   template <typename Fn2, typename... Args2>
@@ -124,6 +161,10 @@ public:
     return fork(*this, rhs);
   }
 };
+
+}
+
+using namespace pipeline;
 
 int main() {
  
@@ -199,6 +240,8 @@ int main() {
     std::cout << rms(std::vector<int>{2, 4, 9, 10, 12}) << "\n"; // 8.30662
   }
 
+  // Unpack fork result (which is a tuple) 
+  // and call next fn
   {
     auto square = fn([](int a) { return a * a; });
     auto cube = fn([](int a) { return a * a * a; });
@@ -209,5 +252,46 @@ int main() {
           std::cout << square_result << " " << cube_result << "\n"; 
         });
     pipeline(5);
+  }
+
+  // Unpack fork result (which is a tuple) 
+  // and call next fn
+  {
+    auto add_3 = fn([](int a) { return a + 3; });
+    auto square = fn([](int a) { return a * a; });
+    auto cube = fn([](int a) { return a * a * a; });
+    auto pipeline = 
+      square
+      | (add_3 & square & cube)
+      | fn([](auto offset, auto square, auto cube) { 
+          std::cout << offset << " " << square << " " << cube << "\n"; 
+        });
+    pipeline(5);
+  }
+
+  // Keep fork result as a tuple
+  // and call next fn
+  {
+    auto square = fn([](int a) { return a * a; });
+    auto cube = fn([](int a) { return a * a * a; });
+    auto pipeline = 
+      square
+      | (square & square & cube)
+      | fn([](auto packed_result) { 
+          std::cout << std::get<0>(packed_result) << " " << std::get<1>(packed_result) << " " << std::get<2>(packed_result)<< "\n"; 
+        });
+    pipeline(5);
+  }
+
+  // Piping a tuple
+  {
+    auto make_tuple = fn([]() { return std::make_tuple(5, 3.14f, "Hello World"); });
+    auto print = fn([](auto int_a, auto float_b, auto str_c) {
+      std::cout << int_a << " " << float_b << " " << str_c << "\n";
+    });
+
+    auto pipeline = make_tuple | print;
+    pipeline();
+    print(15, 6.28f, "Goodbye!");
   }
 }
