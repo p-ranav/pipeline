@@ -1,11 +1,13 @@
 #pragma once
 #include <pipeline/details.hpp>
-#include <pipeline/pipe.hpp>
 
 namespace pipeline {
 
 template <typename Fn, typename... Args>
 class bind;
+
+template <typename T1, typename T2>
+class pipe_pair;
 
 template <typename T1, typename T2>
 class fork_pair {

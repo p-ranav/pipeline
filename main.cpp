@@ -1,18 +1,22 @@
 #include <pipeline/bind.hpp>
+#include <pipeline/pipe.hpp>
+#include <pipeline/fork.hpp>
 #include <fstream>
 #include <optional>
 #include <sstream>
+#include <functional>
+#include "string_utils.hpp"
 using namespace pipeline;
 
 int main() {
  
   {
-    auto add = bind([](int a, int b) { return a + b; });
+    auto add = bind([](int a, int b) { return a + b; }, 5, 10);
     auto square = bind([](int a) { return a * a; });
     auto pretty_print_square = bind([](int result, std::string msg = "Result = ") { std::cout << msg << std::to_string(result) << "\n"; });
 
     auto pipeline = add | square | pretty_print_square;
-    pipeline(5, 10);
+    pipeline();
   }
 
   // Using `pipe(...)` function
@@ -229,5 +233,38 @@ int main() {
     bind t4 = []() { std::cout << "TaskD\n"; };
     auto pipeline = t1 | fork(t2, t3) | t4;
     pipeline();
+  }
+
+  {
+    auto ltrim = bind([](std::string s) {
+      s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int c) {return !std::isspace(c);}));
+      return s;
+    });
+
+    auto rtrim = bind([](std::string s) {
+      s.erase(std::find_if(s.rbegin(), s.rend(), [](int c) {return !std::isspace(c);}).base(), s.end());
+      return s;
+    });
+
+    auto split_comma = bind([](std::string input) {
+      std::vector<std::string> tokens;
+      std::string delimiter = ",";
+      size_t pos = 0;
+      while ((pos = input.find(delimiter)) != std::string::npos) {
+        tokens.push_back(input.substr(0, pos));
+        input.erase(0, pos + delimiter.length());
+      }
+      if (!input.empty())
+        tokens.push_back(input);
+      return tokens;
+    });
+
+    auto csv = ltrim | rtrim | split_comma;
+
+    std::string input = "   a,b,c   ";
+    auto tokens = csv(input);
+    for (auto t: tokens) {
+      std::cout << t << "\n";
+    }
   }
 }
