@@ -168,10 +168,36 @@ auto fork(T1&& t1, T2&& t2, T&&... args) {
   return fork(fork<T1, T2>(std::forward<T1>(t1), std::forward<T2>(t2)), std::forward<T>(args)...);
 }
 
-template <typename... T>
+template <typename... T, typename... R>
 auto fork_async(T&&... args) {
   return bind([](T... args) {
     return std::make_tuple(std::async(std::launch::async, args)...);
+  }, std::forward<T>(args)...);
+}
+
+template <typename... T, typename... R>
+auto fork_async_await(T&&... args) {
+  return bind([](T... args) {
+    // return std::make_tuple(std::async(std::launch::async, args)...);
+    auto futures = std::make_tuple(std::async(std::launch::async, args)...);
+
+    // wait on all futures and return a tuple of results (each forked job)
+    auto join = [](auto&&... future) {
+
+      auto join_one = [](auto&& future) {
+        typedef decltype(future.get()) future_result;
+        if constexpr (std::is_same<future_result, void>::value) {
+          // future.get() will return void
+          // return true instead to indicate completion of function call
+          return true;
+        } else {
+          return future.get();
+        }
+      };
+
+      return std::make_tuple((join_one(future))...);
+    };
+    return details::apply(std::move(futures), join);
   }, std::forward<T>(args)...);
 }
 
