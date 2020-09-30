@@ -18,6 +18,14 @@ int main() {
     pipeline();
   }
 
+  {
+    auto pipeline = 
+      bind([](int a, int b) { return a + b; }, 5, 10)
+      | /* square    */ [](int a) { return a * a; }
+      | /* print msg */ [](int result, std::string msg = "Result = ") { std::cout << msg << std::to_string(result) << "\n"; };
+    pipeline();
+  }
+
   // Using `pipe(...)` function
   {
     auto add = bind([](int a, int b) { return a + b; });

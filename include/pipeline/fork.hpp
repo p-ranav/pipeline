@@ -135,9 +135,26 @@ public:
     }
   }
 
+  // If rhs is fork, bind or pipe
   template <typename T3>
-  auto operator|(T3&& rhs) {
+  typename std::enable_if<
+    details::is_specialization<typename std::decay<T3>::type, bind>::value || 
+    details::is_specialization<typename std::decay<T3>::type, pipe_pair>::value || 
+    details::is_specialization<typename std::decay<T3>::type, fork_pair>::value, 
+  pipe_pair<fork_pair<T1, T2>, T3>>::type 
+  operator|(T3&& rhs) {
     return pipe_pair<fork_pair<T1, T2>, T3>(*this, std::forward<T3>(rhs));
+  }
+
+  // If rhs is a lambda function
+  template <typename T3>
+  typename std::enable_if<
+    !details::is_specialization<typename std::decay<T3>::type, bind>::value &&
+    !details::is_specialization<typename std::decay<T3>::type, pipe_pair>::value &&
+    !details::is_specialization<typename std::decay<T3>::type, fork_pair>::value, 
+  pipe_pair<fork_pair<T1, T2>, bind<T3>>>::type 
+  operator|(T3&& rhs) {
+    return pipe_pair<fork_pair<T1, T2>, bind<T3>>(*this, bind(std::forward<T3>(rhs)));
   }
 };
 
