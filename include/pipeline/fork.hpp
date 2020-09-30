@@ -52,7 +52,7 @@ public:
 
   fork_pair(T1 left, T2 right) : left_(left), right_(right) {}
 
-  // output of fork is always a tuple
+  // output of fork_pair(...) is always a tuple
   // - a tuple of merged results of left and right
   template <typename... T>
   auto operator()(T&&... args) {
@@ -121,9 +121,9 @@ public:
 
   template <typename F, typename... Args>
   static constexpr bool is_invocable_on() {
-    if constexpr (details::is_specialization<F, bind>::value) {
+    if constexpr (details::is_specialization<typename std::remove_reference<F>::type, bind>::value) {
       // F is an `bind` type
-      return F::template is_invocable_on<Args...>();
+      return std::remove_reference<F>::type::template is_invocable_on<Args...>();
     }
     else {
       return is_invocable_on<typename F::left_type, Args...>();

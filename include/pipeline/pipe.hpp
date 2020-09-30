@@ -50,10 +50,9 @@ public:
 
   template <typename F, typename... Args>
   static constexpr bool is_invocable_on() {
-    if constexpr (details::is_specialization<F, bind>::value) {
+    if constexpr (details::is_specialization<typename std::remove_reference<F>::type, bind>::value) {
       // F is an `bind` type
-      return F::template is_invocable_on<Args...>();
-      // return std::is_invocable<F, Args...>::value;
+      return std::remove_reference<F>::type::template is_invocable_on<Args...>();
     }
     else {
       return is_invocable_on<typename F::left_type, Args...>();
