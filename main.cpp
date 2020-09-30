@@ -1,6 +1,7 @@
 #include <pipeline/bind.hpp>
 #include <pipeline/pipe.hpp>
 #include <pipeline/fork.hpp>
+#include <pipeline/fork_parallel.hpp>
 #include <fstream>
 #include <optional>
 #include <sstream>
@@ -266,5 +267,56 @@ int main() {
     for (auto t: tokens) {
       std::cout << t << "\n";
     }
+  }
+
+  // // Testing fork_parallel
+  // {
+  //   bind counter = [](auto n) { 
+  //     static size_t previous{0};
+  //     auto result = std::make_tuple(n, previous);
+  //     previous = n;
+  //     return result;
+  //   };
+
+  //   bind print_n = [](auto n, auto prev) {
+  //     std::cout << "N = " << n << "\n";
+  //     return n;
+  //   };
+
+  //   bind print_prev = [](auto n, auto prev) {
+  //     std::cout << "Prev = " << prev << "\n";
+  //     return prev;
+  //   };
+
+  //   bind print_result = [](auto n, auto prev) { 
+  //     std::cout << "Stateful result = " << n << " - " << prev << "\n"; 
+  //   };
+
+  //   auto pipeline = counter | fork_parallel(print_n, print_prev);
+  //   pipeline(5);
+  //   pipeline(10);
+  //   pipeline(15);
+  // }
+
+  // Fork with async
+  {
+    auto factorial_async = [](auto n) {
+      return std::async(std::launch::async, [](auto n) {
+        decltype(n) result{1};
+        for(size_t i = 1; i <= n; ++i) {
+          result *= i;
+        }
+        return result;
+      }, n);
+    };
+
+    bind print_result = [](auto&& result) {
+      std::cout << std::get<0>(result).get() << " " << std::get<1>(result).get() << "\n";
+    };
+
+    auto pipeline = fork(bind(factorial_async, 5), bind(factorial_async, 10)) | print_result;
+    pipeline();
+    // should print:
+    // 120 3628800
   }
 }

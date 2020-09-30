@@ -7,9 +7,6 @@ template <typename Fn, typename... Args>
 class bind;
 
 template <typename T1, typename T2>
-class fork_pair;
-
-template <typename T1, typename T2>
 class pipe_pair {
   T1 left_;
   T2 right_;
