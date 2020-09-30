@@ -192,38 +192,6 @@ int main() {
   }
 
   {
-    bind counter = [](auto n) { 
-      static size_t previous{0};
-      auto result = std::make_tuple(n, previous);
-      previous = n;
-      return result;
-    };
-
-    bind print_n = [](auto n, auto prev) {
-      std::cout << "N = " << n << "\n";
-      return n;
-    };
-
-    bind print_prev = [](auto n, auto prev) {
-      std::cout << "Prev = " << prev << "\n";
-      return prev;
-    };
-
-    bind print_result = [](auto n, auto prev) { 
-      std::cout << "Stateful result = " << n << " - " << prev << "\n"; 
-    };
-
-    bind print_result_2 = [](auto packed) {
-      std::cout << "Stateful result = " << std::get<0>(packed) << " - " << std::get<1>(packed) << "\n"; 
-    };
-
-    auto pipeline = pipe(counter, fork(print_n, print_prev), print_result);
-    pipeline(3);
-    pipeline(6);
-    pipeline(9);
-  }
-
-  {
     bind read_file = [](std::string_view filename = "main.cpp") {
       std::string buffer;
 
@@ -252,5 +220,14 @@ int main() {
     line_printer();
     line_printer();
     line_printer();
+  }
+
+  {
+    bind t1 = []() { std::cout << "TaskA\n"; };
+    bind t2 = []() { std::cout << "TaskB\n"; };
+    bind t3 = []() { std::cout << "TaskC\n"; };
+    bind t4 = []() { std::cout << "TaskD\n"; };
+    auto pipeline = t1 | fork(t2, t3) | t4;
+    pipeline();
   }
 }
