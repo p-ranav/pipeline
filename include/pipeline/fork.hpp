@@ -169,7 +169,7 @@ auto fork(T1&& t1, T2&& t2, T&&... args) {
 }
 
 template <typename... T>
-auto fork_parallel(T&&... args) {
+auto fork_async(T&&... args) {
   return bind([](T... args) {
     return std::make_tuple(std::async(std::launch::async, args)...);
   }, std::forward<T>(args)...);

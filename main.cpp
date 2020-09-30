@@ -328,7 +328,7 @@ int main() {
 
   {
     bind greet = []() { std::cout << "Hello World!\n"; };
-    auto pair = fork_parallel(greet, greet, greet);
+    auto pair = fork_async(greet, greet, greet);
     pair();
   }
 
@@ -342,7 +342,7 @@ int main() {
       // std::cout << t1.get() << ", " << t2.get() << "\n";
       std::cout << "TaskD\n";
     };
-    auto pipeline = t1 | fork_parallel(t2, t3, t2, t3, t2, t3) | t4;
+    auto pipeline = t1 | fork_async(t2, t3, t2, t3, t2, t3) | t4;
     pipeline();
   }
 
@@ -370,7 +370,7 @@ int main() {
       std::cout << "TaskE\n";
     };
     
-    auto pipeline = t1 | fork_parallel(t2, t3, t4) | t5;
+    auto pipeline = t1 | fork_async(t2, t3, t4) | t5;
     pipeline();
  }
 
