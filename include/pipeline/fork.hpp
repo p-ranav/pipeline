@@ -1,5 +1,8 @@
 #pragma once
 #include <pipeline/details.hpp>
+#include <thread>
+#include <future>
+#include <pipeline/bind.hpp>
 
 namespace pipeline {
 
@@ -146,6 +149,13 @@ auto fork(T1&& t1, T2&& t2) {
 template <typename T1, typename T2, typename... T>
 auto fork(T1&& t1, T2&& t2, T&&... args) {
   return fork(fork<T1, T2>(std::forward<T1>(t1), std::forward<T2>(t2)), std::forward<T>(args)...);
+}
+
+template <typename... T>
+auto fork_parallel(T&&... args) {
+  return bind([](T... args) {
+    return std::make_tuple(std::async(std::launch::async, args)...);
+  }, std::forward<T>(args)...);
 }
 
 }

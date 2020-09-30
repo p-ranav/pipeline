@@ -1,12 +1,10 @@
 #include <pipeline/bind.hpp>
 #include <pipeline/pipe.hpp>
 #include <pipeline/fork.hpp>
-#include <pipeline/fork_parallel.hpp>
 #include <fstream>
 #include <optional>
 #include <sstream>
 #include <functional>
-#include "string_utils.hpp"
 using namespace pipeline;
 
 int main() {
@@ -319,4 +317,58 @@ int main() {
     // should print:
     // 120 3628800
   }
+
+  {
+    bind greet = []() { std::cout << "Hello World!\n"; };
+    auto pair = fork_parallel(greet, greet, greet);
+    pair();
+  }
+
+  {
+    bind t1 = []() { std::cout << "TaskA\n"; };
+    bind t2 = []() { return 1; };
+    bind t3 = []() { return 2; };
+    bind t4 = [](auto&& futures) { 
+    // bind t4 = [](auto&& t1, auto&& t2) { 
+      std::cout << std::get<0>(futures).get() << ", " << std::get<1>(futures).get() << "\n";
+      // std::cout << t1.get() << ", " << t2.get() << "\n";
+      std::cout << "TaskD\n";
+    };
+    auto pipeline = t1 | fork_parallel(t2, t3, t2, t3, t2, t3) | t4;
+    pipeline();
+  }
+
+  std::cout << "\n\n";
+
+  {
+    bind t1 = []() { std::cout << "TaskA\n"; };
+    bind t2 = []() { return 2; };
+    bind t3 = []() { return 3.14f; };
+    bind t4 = []() { return "Hello World"; };
+    bind t5 = [](auto&& t2_future, auto&& t3_future, auto&& t4_future) {
+      // wait for t2, t3 and t4 (from the previous stage) to get done
+      // note: you can do this wherever you want within this task
+      auto t2_result = t2_future.get();
+      std::cout << "TaskB: " << t2_result << "\n";
+
+      auto t3_result = t3_future.get();
+      std::cout << "TaskC: " << t3_result << "\n";
+      
+      // Here's an example where you wait for t4 
+      // from the previous stage to get done
+      auto t4_result = t4_future.get();
+			std::cout << "TaskD: " << t4_result << "\n";
+      
+      std::cout << "TaskE\n";
+    };
+    
+    auto pipeline = t1 | fork_parallel(t2, t3, t4) | t5;
+    pipeline();
+ }
+
+// TaskA
+// TaskB: 2               <--- Concurrently with task C and D 
+// TaskC: 3.14            <--- Concurrently with task B and D
+// TaskD: Hello World     <--- Concurrently with task B and C
+// TaskE
 }

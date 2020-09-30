@@ -36,6 +36,7 @@ public:
       // left_result not a tuple
       // call right_ with left_result
       if constexpr (!std::is_same<left_result, void>::value) {
+        std::cout << "Left result not a tuple\n";
         return right_(left_(std::forward<T>(args)...));
       } else {
         // left result is void
