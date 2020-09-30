@@ -92,7 +92,7 @@ int main() {
     auto cube = bind([](int a) { return a * a * a; });
     auto pipeline = 
       square
-      | (square & cube)
+      | fork(square, cube)
       | bind([](auto square_result, auto cube_result) { 
           std::cout << square_result << " " << cube_result << "\n"; 
         });
@@ -123,7 +123,7 @@ int main() {
     auto cube = bind([](int a) { return a * a * a; });
     auto pipeline = 
       square
-      | (add_3 & square & cube)
+      | fork(add_3, square, cube)
       | bind([](auto offset, auto square, auto cube) { 
           std::cout << offset << " " << square << " " << cube << "\n"; 
         })
@@ -139,7 +139,7 @@ int main() {
     auto cube = bind([](int a) { return a * a * a; });
     auto pipeline = 
       square
-      | ((add_10 | square) & square & cube)
+      | fork((add_10 | square), square, cube)
       | bind([](auto packed_result) { 
           std::cout << std::get<0>(packed_result) << " " << std::get<1>(packed_result) << " " << std::get<2>(packed_result)<< "\n"; 
         })
@@ -185,7 +185,7 @@ int main() {
       std::cout << "Stateful result = " << std::get<0>(packed) << " - " << std::get<1>(packed) << "\n"; 
     };
 
-    auto pipeline = counter | /* fork */ (print_n & print_prev) | /* join */ print_result;
+    auto pipeline = counter | fork(print_n, print_prev) | print_result;
     pipeline(5);
     pipeline(10);
     pipeline(15);

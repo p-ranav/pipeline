@@ -60,13 +60,8 @@ public:
   }
 
   template <typename T3>
-  auto operator|(const T3& rhs) {
-    return pipe_pair<pipe_pair<T1, T2>, T3>(*this, rhs);
-  }
-
-  template <typename T3>
-  auto operator&(const T3& rhs) {
-    return fork_pair<pipe_pair<T1, T2>, T3>(*this, rhs);
+  auto operator|(T3&& rhs) {
+    return pipe_pair<pipe_pair<T1, T2>, T3>(*this, std::forward<T3>(rhs));
   }
 };
 
