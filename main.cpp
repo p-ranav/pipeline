@@ -6,6 +6,7 @@
 #include <optional>
 #include <sstream>
 #include <functional>
+#include <chrono>
 using namespace pipeline;
 
 int main() {
@@ -387,5 +388,22 @@ int main() {
    auto greet = []() { std::cout << "Discarding args from previous stage\n"; };
    auto pipeline_2 = add | greet;
    pipeline_2(6, 11);
+ }
+
+ {
+  // Dynamic tasking and subflows
+  auto A = bind([](){ std::cout << "A" << std::endl; });
+  auto C = bind([](){ std::cout << "C\n"; });
+  auto D = bind([](){ std::cout << "D\n"; });
+
+  auto B = bind([](){
+    auto B1 = bind([](){ std::cout << "B1\n"; });
+    auto B2 = bind([](){ std::cout << "B2\n"; });
+    auto B3 = bind([](){ std::cout << "B3\n"; });
+    return (fork(B1, B2) | B3)();
+  });
+
+  auto pipeline = A | fork(C, B) | D;
+  pipeline();
  }
 }

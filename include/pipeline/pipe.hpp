@@ -37,6 +37,7 @@ public:
       } else {
         // check if right is invocable without args
         if constexpr (is_invocable_on<T2>()) {
+          left_(std::forward<T>(args)...);
           return right_();
         } else {
           // unpack tuple into parameter pack and call right_
@@ -50,6 +51,7 @@ public:
         // if right can be invoked without args
         // just call without args
         if constexpr (is_invocable_on<T2>()) {
+          left_(std::forward<T>(args)...);
           return right_();
         } else {
           return right_(left_(std::forward<T>(args)...));
