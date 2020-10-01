@@ -39,7 +39,7 @@ class fork_async {
         return details::apply(tuple, fn);
       };
 
-      return std::make_tuple(std::async(std::launch::async, unpack, args_tuple, fns)...);
+      return std::make_tuple(std::async(std::launch::async | std::launch::deferred, unpack, args_tuple, fns)...);
     }, std::forward<A>(args_tuple), std::forward<T>(fns)...);
   }
 

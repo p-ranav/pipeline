@@ -39,7 +39,7 @@ class fork {
         return details::apply(tuple, fn);
       };
 
-      auto futures = std::make_tuple(std::async(std::launch::async, unpack, args_tuple, fns)...);
+      auto futures = std::make_tuple(std::async(std::launch::async | std::launch::deferred, unpack, args_tuple, fns)...);
 
       // wait on all futures and return a tuple of results (each forked job)
       auto join = [](auto&&... future) {
