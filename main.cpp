@@ -400,7 +400,9 @@ int main() {
     auto B1 = bind([](){ std::cout << "B1\n"; });
     auto B2 = bind([](){ std::cout << "B2\n"; });
     auto B3 = bind([](){ std::cout << "B3\n"; });
-    return (fork(B1, B2) | B3)();
+
+    auto B = fork(B1, B2) | B3;
+    return B();
   });
 
   auto pipeline = A | fork(C, B) | D;
