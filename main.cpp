@@ -1,6 +1,7 @@
 #include <pipeline/bind.hpp>
 #include <pipeline/pipe.hpp>
 #include <pipeline/fork.hpp>
+#include <pipeline/fork_async.hpp>
 #include <fstream>
 #include <optional>
 #include <sstream>
@@ -276,35 +277,6 @@ int main() {
     }
   }
 
-  // // Testing fork_parallel
-  // {
-  //   bind counter = [](auto n) { 
-  //     static size_t previous{0};
-  //     auto result = std::make_tuple(n, previous);
-  //     previous = n;
-  //     return result;
-  //   };
-
-  //   bind print_n = [](auto n, auto prev) {
-  //     std::cout << "N = " << n << "\n";
-  //     return n;
-  //   };
-
-  //   bind print_prev = [](auto n, auto prev) {
-  //     std::cout << "Prev = " << prev << "\n";
-  //     return prev;
-  //   };
-
-  //   bind print_result = [](auto n, auto prev) { 
-  //     std::cout << "Stateful result = " << n << " - " << prev << "\n"; 
-  //   };
-
-  //   auto pipeline = counter | fork_parallel(print_n, print_prev);
-  //   pipeline(5);
-  //   pipeline(10);
-  //   pipeline(15);
-  // }
-
   // Fork with async
   {
     auto factorial_async = [](auto n) {
@@ -370,6 +342,37 @@ int main() {
     };
     
     auto pipeline = t1 | fork(t2, t3, t4) | t5;
+    pipeline();
+ }
+
+   {
+    bind t1 = []() { std::cout << "TaskA\n"; };
+    bind t2 = []() { 
+      std::cout << "Running TaskB\n";
+      return 2; 
+    };
+    bind t3 = []() { 
+      std::cout << "Running TaskC\n";
+      return 3.14f; 
+    };
+    bind t4 = []() { 
+      std::cout << "Running TaskD\n";
+      return "Hello World"; 
+    };
+    bind t5 = [](auto&& t2_future, auto&& t3_future, auto&& t4_future) {
+      auto t2_result = t2_future.get();
+      std::cout << "TaskB: " << t2_result << "\n";
+
+      auto t3_result = t3_future.get();
+      std::cout << "TaskC: " << t3_result << "\n";
+
+      auto t4_result = t4_future.get();
+			std::cout << "TaskD: " << t4_result << "\n";
+      
+      std::cout << "TaskE\n";
+    };
+    
+    auto pipeline = t1 | fork_async(t2, t3, t4) | t5;
     pipeline();
  }
 

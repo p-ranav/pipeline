@@ -12,11 +12,11 @@ class bind;
 template <typename T1, typename T2>
 class pipe_pair;
 
+// Very similar to fork
+// Unlike fork, fork_async::operator() does not wait for results
+// - it simply returns a tuple of futures
 template <typename Fn, typename... Fns>
-class fork_async;
-
-template <typename Fn, typename... Fns>
-class fork {
+class fork_async {
   Fn first_;
   std::tuple<Fn, Fns...> fns_;
 
@@ -32,39 +32,21 @@ class fork {
   // For functions that return `void`, we simply return true to indicate that
   // the function completed
   template <typename A, typename... T>
-  auto do_async_await(A&& args_tuple, T&&... fns) {
+  auto do_fork_async(A&& args_tuple, T&&... fns) {
     return bind([](A args_tuple, T... fns) {
 
       auto unpack = [](auto tuple, auto fn) {
         return details::apply(tuple, fn);
       };
 
-      auto futures = std::make_tuple(std::async(std::launch::async, unpack, args_tuple, fns)...);
-
-      // wait on all futures and return a tuple of results (each forked job)
-      auto join = [](auto&&... future) {
-
-        auto join_one = [](auto&& future) {
-          typedef decltype(future.get()) future_result;
-          if constexpr (std::is_same<future_result, void>::value) {
-            // future.get() will return void
-            // return true instead to indicate completion of function call
-            return true;
-          } else {
-            return future.get();
-          }
-        };
-
-        return std::make_tuple((join_one(future))...);
-      };
-      return details::apply(std::move(futures), join);
+      return std::make_tuple(std::async(std::launch::async, unpack, args_tuple, fns)...);
     }, std::forward<A>(args_tuple), std::forward<T>(fns)...);
   }
 
 public:
   typedef Fn left_type;
 
-  fork(Fn first, Fns... fns) : first_(first), fns_(first, fns...) {}
+  fork_async(Fn first, Fns... fns) : first_(first), fns_(first, fns...) {}
 
   template <typename... Args>
   auto operator()(Args&&... args) {
@@ -75,10 +57,10 @@ public:
     // the fns_ tuple is converted into a parameter pack and 
     // the lambda is called with that parameter pack
     // 
-    // Then, we call do_async_await which takes a tuple of args
+    // Then, we call do_fork_async which takes a tuple of args
     // along with the parameter pack of functions
     return details::apply(fns_, [this, args...](auto... fns) {
-      return do_async_await(std::make_tuple(args...), fns...)();
+      return do_fork_async(std::make_tuple(args...), fns...)();
     });
   }
 
@@ -89,9 +71,9 @@ public:
     details::is_specialization<typename std::decay<T3>::type, pipe_pair>::value || 
     details::is_specialization<typename std::decay<T3>::type, fork>::value ||
     details::is_specialization<typename std::decay<T3>::type, fork_async>::value, 
-  pipe_pair<fork<Fn, Fns...>, T3>>::type 
+  pipe_pair<fork_async<Fn, Fns...>, T3>>::type 
   operator|(T3&& rhs) {
-    return pipe_pair<fork<Fn, Fns...>, T3>(*this, std::forward<T3>(rhs));
+    return pipe_pair<fork_async<Fn, Fns...>, T3>(*this, std::forward<T3>(rhs));
   }
 
   // If rhs is a lambda function
@@ -101,9 +83,9 @@ public:
     !details::is_specialization<typename std::decay<T3>::type, pipe_pair>::value &&
     !details::is_specialization<typename std::decay<T3>::type, fork>::value &&
     !details::is_specialization<typename std::decay<T3>::type, fork_async>::value, 
-  pipe_pair<fork<Fn, Fns...>, bind<T3>>>::type 
+  pipe_pair<fork_async<Fn, Fns...>, bind<T3>>>::type 
   operator|(T3&& rhs) {
-    return pipe_pair<fork<Fn, Fns...>, bind<T3>>(*this, bind(std::forward<T3>(rhs)));
+    return pipe_pair<fork_async<Fn, Fns...>, bind<T3>>(*this, bind(std::forward<T3>(rhs)));
   }
 
 };

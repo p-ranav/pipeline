@@ -9,6 +9,9 @@ class pipe_pair;
 template <typename Fn, typename... Fns>
 class fork;
 
+template <typename Fn, typename... Fns>
+class fork_async;
+
 template <typename Fn, typename... Args>
 class bind {
   Fn fn_;
@@ -29,12 +32,13 @@ public:
     return std::is_invocable<Fn, A...>::value;
   }
 
-  // If rhs is fork, bind or pipe
+  // If rhs is bind or pipe, fork or fork_async
   template <typename T>
   typename std::enable_if<
     details::is_specialization<typename std::decay<T>::type, bind>::value || 
     details::is_specialization<typename std::decay<T>::type, pipe_pair>::value || 
-    details::is_specialization<typename std::decay<T>::type, fork>::value, 
+    details::is_specialization<typename std::decay<T>::type, fork>::value ||
+    details::is_specialization<typename std::decay<T>::type, fork_async>::value, 
   pipe_pair<bind<Fn, Args...>, T>>::type 
   operator|(T&& rhs) {
     return pipe_pair<bind<Fn, Args...>, T>(*this, std::forward<T>(rhs));
@@ -45,7 +49,8 @@ public:
   typename std::enable_if<
     !details::is_specialization<typename std::decay<T>::type, bind>::value &&
     !details::is_specialization<typename std::decay<T>::type, pipe_pair>::value &&
-    !details::is_specialization<typename std::decay<T>::type, fork>::value, 
+    !details::is_specialization<typename std::decay<T>::type, fork>::value &&
+    !details::is_specialization<typename std::decay<T>::type, fork_async>::value, 
   pipe_pair<bind<Fn, Args...>, bind<T>>>::type 
   operator|(T&& rhs) {
     return pipe_pair<bind<Fn, Args...>, bind<T>>(*this, bind<T>(std::forward<T>(rhs)));
