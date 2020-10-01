@@ -6,8 +6,8 @@ namespace pipeline {
 template <typename Fn, typename... Args>
 class bind;
 
-template <typename T1, typename T2>
-class fork_pair;
+template <typename Fn, typename... Fns>
+class fork;
 
 template <typename T1, typename T2>
 class pipe_pair {
@@ -32,14 +32,19 @@ public:
         // right_ takes a tuple
         return right_(left_(std::forward<T>(args)...));
       } else {
-        // unpack tuple into parameter pack and call right_
-        return details::apply(left_(std::forward<T>(args)...), right_);
+
+        // check if right is invocable without args
+        if constexpr (is_invocable_on<T2>()) {
+          return right_();
+        } else {
+          // unpack tuple into parameter pack and call right_
+          return details::apply(left_(std::forward<T>(args)...), right_);
+        }
       }
     } else {
       // left_result not a tuple
       // call right_ with left_result
       if constexpr (!std::is_same<left_result, void>::value) {
-        std::cout << "Left result not a tuple\n";
         return right_(left_(std::forward<T>(args)...));
       } else {
         // left result is void
@@ -65,7 +70,7 @@ public:
   typename std::enable_if<
     details::is_specialization<typename std::decay<T3>::type, bind>::value || 
     details::is_specialization<typename std::decay<T3>::type, pipe_pair>::value || 
-    details::is_specialization<typename std::decay<T3>::type, fork_pair>::value, 
+    details::is_specialization<typename std::decay<T3>::type, fork>::value, 
   pipe_pair<pipe_pair<T1, T2>, T3>>::type 
   operator|(T3&& rhs) {
     return pipe_pair<pipe_pair<T1, T2>, T3>(*this, std::forward<T3>(rhs));
@@ -76,7 +81,7 @@ public:
   typename std::enable_if<
     !details::is_specialization<typename std::decay<T3>::type, bind>::value &&
     !details::is_specialization<typename std::decay<T3>::type, pipe_pair>::value &&
-    !details::is_specialization<typename std::decay<T3>::type, fork_pair>::value, 
+    !details::is_specialization<typename std::decay<T3>::type, fork>::value, 
   pipe_pair<pipe_pair<T1, T2>, bind<T3>>>::type 
   operator|(T3&& rhs) {
     return pipe_pair<pipe_pair<T1, T2>, bind<T3>>(*this, bind(std::forward<T3>(rhs)));

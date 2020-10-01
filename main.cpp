@@ -101,6 +101,7 @@ int main() {
   {
     auto square = bind([](int a) { return a * a; });
     auto cube = bind([](int a) { return a * a * a; });
+
     auto pipeline = 
       square
       | fork(square, cube)
@@ -326,23 +327,23 @@ int main() {
     // 120 3628800
   }
 
-  {
-    bind greet = []() { std::cout << "Hello World!\n"; };
-    auto pair = fork_async(greet, greet, greet);
-    pair();
-  }
+  // {
+  //   bind greet = []() { std::cout << "Hello World!\n"; };
+  //   auto pair = fork_async(greet, greet, greet);
+  //   pair();
+  // }
 
-  {
-    bind t1 = []() { std::cout << "TaskA\n"; };
-    bind t2 = []() { return 1; };
-    bind t3 = []() { return 2; };
-    bind t4 = [](auto&& t1, auto&& t2) { 
-      std::cout << t1.get() << ", " << t2.get() << "\n";
-      std::cout << "TaskD\n";
-    };
-    auto pipeline = t1 | fork_async(t2, t3) | t4;
-    pipeline();
-  }
+  // {
+  //   bind t1 = []() { std::cout << "TaskA\n"; };
+  //   bind t2 = []() { return 1; };
+  //   bind t3 = []() { return 2; };
+  //   bind t4 = [](auto&& t1, auto&& t2) { 
+  //     std::cout << t1.get() << ", " << t2.get() << "\n";
+  //     std::cout << "TaskD\n";
+  //   };
+  //   auto pipeline = t1 | fork_async(t2, t3) | t4;
+  //   pipeline();
+  // }
 
   std::cout << "\n\n";
 
@@ -368,7 +369,7 @@ int main() {
       std::cout << "TaskE\n";
     };
     
-    auto pipeline = t1 | fork_async_await(t2, t3, t4) | t5;
+    auto pipeline = t1 | fork(t2, t3, t4) | t5;
     pipeline();
  }
 }
