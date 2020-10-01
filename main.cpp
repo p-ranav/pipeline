@@ -372,4 +372,17 @@ int main() {
     auto pipeline = t1 | fork(t2, t3, t4) | t5;
     pipeline();
  }
+
+  // Ignore result of previous stage in pipeline
+ {
+   auto add = bind([](int a, int b) { return a + b; });
+   auto print_result = [](int sum) { std::cout << "Sum = " << sum << "\n"; };
+
+   auto pipeline_1 = add | print_result;
+   pipeline_1(4, 9);
+
+   auto greet = []() { std::cout << "Discarding args from previous stage\n"; };
+   auto pipeline_2 = add | greet;
+   pipeline_2(6, 11);
+ }
 }

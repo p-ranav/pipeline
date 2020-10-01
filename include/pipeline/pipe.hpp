@@ -32,7 +32,6 @@ public:
         // right_ takes a tuple
         return right_(left_(std::forward<T>(args)...));
       } else {
-
         // check if right is invocable without args
         if constexpr (is_invocable_on<T2>()) {
           return right_();
@@ -45,7 +44,13 @@ public:
       // left_result not a tuple
       // call right_ with left_result
       if constexpr (!std::is_same<left_result, void>::value) {
-        return right_(left_(std::forward<T>(args)...));
+        // if right can be invoked without args
+        // just call without args
+        if constexpr (is_invocable_on<T2>()) {
+          return right_();
+        } else {
+          return right_(left_(std::forward<T>(args)...));
+        }
       } else {
         // left result is void
         left_(std::forward<T>(args)...);
