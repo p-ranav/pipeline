@@ -6,19 +6,18 @@ namespace pipeline {
 template <typename T1, typename T2>
 class pipe_pair;
 
-template <typename Fn, typename... Args>
-class bind {
+template <typename Fn>
+class fn {
   Fn fn_;
-  std::tuple<Args...> args_;
 
 public:
   typedef Fn left_type;
 
-  bind(Fn fn, Args... args): fn_(fn), args_(args...) {}
+  fn(Fn fn): fn_(fn) {}
 
   template <typename... T>
-  auto operator()(T&&... left_args) {
-    return details::apply(std::tuple_cat(std::forward_as_tuple(std::forward<T>(left_args)...), args_), fn_);
+  auto operator()(T&&... args) {
+    return details::apply(std::forward_as_tuple(std::forward<T>(args)...), fn_);
   }
 
   template <typename... A>
@@ -28,7 +27,7 @@ public:
 
   template <typename T>
   auto operator|(T&& rhs) {
-    return pipe_pair<bind<Fn, Args...>, T>(*this, std::forward<T>(rhs));
+    return pipe_pair<fn<Fn>, T>(*this, std::forward<T>(rhs));
   }
 };
 

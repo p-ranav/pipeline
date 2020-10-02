@@ -6,6 +6,9 @@ namespace pipeline {
 template <typename Fn, typename... Args>
 class bind;
 
+template <typename Fn>
+class fn;
+
 template <typename T1, typename T2>
 class pipe_pair {
   T1 left_;
@@ -62,6 +65,10 @@ public:
   static constexpr bool is_invocable_on() {
     if constexpr (details::is_specialization<typename std::remove_reference<F>::type, bind>::value) {
       // F is an `bind` type
+      return std::remove_reference<F>::type::template is_invocable_on<Args...>();
+    }
+    else if constexpr (details::is_specialization<typename std::remove_reference<F>::type, fn>::value) {
+      // F is an `fn` type
       return std::remove_reference<F>::type::template is_invocable_on<Args...>();
     }
     else {
