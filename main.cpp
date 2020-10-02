@@ -461,12 +461,16 @@ int main() {
    // unzip_into(foo) will need to become:
    // -> fork(bind(foo_1, i_1), bind(foo_2, i_2), bind(foo_3, i_3))
 
-   auto f1 = fn([](int a) { std::cout << "Running f1 " << a << "\n"; });
-   auto f2 = fn([](std::string a) { std::cout << "Running f2 " << a << "\n"; });
-
    auto make_args = fn([] { return std::make_tuple(1, std::string{"Hello"}); });
+   auto f1 = fn([](int a) { return a * a; });
+   auto f2 = fn([](std::string s) { return s + ", World!"; });
 
-   auto pipeline = make_args | unzip_into(f1, f2) | fn([] { std::cout << "Done\n"; });
+   auto print_result = fn([] (auto f1_result, auto f2_result) { 
+     std::cout << f1_result << ", " << f2_result << "\n";
+     std::cout << "Done\n"; 
+   });
+
+   auto pipeline = make_args | unzip_into(f1, f2) | print_result;
    pipeline();
  }
 
