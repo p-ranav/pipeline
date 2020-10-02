@@ -16,12 +16,12 @@ template <typename Fn, typename... Fns>
 class fork;
 
 template <typename Fn, typename... Fns>
-class unzip_into {
+class unzip_into_async {
   std::tuple<Fn, Fns...> fns_;
 
   template <class F, class Tuple1, class Tuple2, std::size_t... I>
   auto apply2_impl(F&& f, Tuple1&& t1, Tuple2&& t2, std::index_sequence<I...>) {
-    return fork((std::forward<F>(f)(std::get<I>(std::forward<Tuple1>(t1)), std::get<I>(std::forward<Tuple2>(t2))))...);
+    return fork_async((std::forward<F>(f)(std::get<I>(std::forward<Tuple1>(t1)), std::get<I>(std::forward<Tuple2>(t2))))...);
   }
 
   template <class F, class Tuple1, class Tuple2>
@@ -33,7 +33,7 @@ class unzip_into {
 public:
   typedef Fn left_type;
 
-  unzip_into(Fn first, Fns... fns) : fns_(first, fns...) {}
+  unzip_into_async(Fn first, Fns... fns) : fns_(first, fns...) {}
 
   template <typename... Args>
   auto operator()(Args&&... args) {
@@ -44,19 +44,19 @@ public:
       return bind(fn, std::move(arg));
     };
 
-    auto unzipped_fork = apply2(bind_arg, fns_, std::tuple<Args...>(args...));
+    auto unzipped_fork_async = apply2(bind_arg, fns_, std::tuple<Args...>(args...));
 
     // Let's say the input args were (arg1, arg2, arg3, ...)
     // And we have functions (fn1, fn2, fn3, ...)
 
     // The above code has constructed a fork:
-    // fork(bind(fn1, arg1), bind(fn2, arg2), bind(fn3, arg3), ...)
+    // fork_async(bind(fn1, arg1), bind(fn2, arg2), bind(fn3, arg3), ...)
     //
     // Each function is bound to an argument from the input
-    // and because it is a fork, these can/will run in parallel
+    // and because it is a fork_async, these can/will run in parallel
 
-    // Simply run the fork and return the results
-    return unzipped_fork();
+    // Simply run the fork_async and return the results
+    return unzipped_fork_async();
   }
 
   template <typename T3>
