@@ -3,7 +3,7 @@
 #include <pipeline/pipe.hpp>
 #include <pipeline/fork.hpp>
 #include <pipeline/fork_async.hpp>
-#include <pipeline/unzip.hpp>
+#include <pipeline/unzip_into.hpp>
 #include <fstream>
 #include <optional>
 #include <sstream>
@@ -465,12 +465,27 @@ int main() {
 
    auto make_args = fn([] { return std::make_tuple(1, std::string{"Hello"}); });
 
+   auto pipeline = make_args | unzip_into(f1, f2) | fn([] { std::cout << "Done\n"; });
+   pipeline();
+ }
+
+ {
+   // run parallel and unzip_into | unzip_into
+
+   auto make_args = fn([] { return std::make_tuple(1, std::string{"Hello"}); });
+   auto f1 = fn([](int a) { return a * a; });
+   auto f2 = fn([](std::string a) { return a + ", World!"; });
+   auto print_f1_f2_results = fn([](int a, std::string b) {
+     std::cout << a << ", " << b << "\n";
+   });
+
+   auto print_f1_result = fn([](auto a) { std::cout << "f1 = " << a << "\n"; });
+   auto print_f2_result = fn([](auto a) { std::cout << "f2 = " << a << "\n"; });
+
    auto pipeline = 
-      make_args 
-      | unzip(
-          fn([](int a) { std::cout << "Running f1 " << a << "\n"; }),
-          fn([](std::string a) { std::cout << "Running f2 " << a << "\n"; })) 
+      make_args | unzip_into(f1, f2) | fork(print_f1_f2_results, unzip_into(print_f1_result, print_f2_result))
       | fn([] { std::cout << "Done\n"; });
    pipeline();
+
  }
 }

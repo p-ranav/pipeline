@@ -13,7 +13,7 @@ template <typename T1, typename T2>
 class pipe_pair;
 
 template <typename Fn, typename... Fns>
-class unzip {
+class unzip_into {
   std::tuple<Fn, Fns...> fns_;
 
   template <class F, class Tuple1, class Tuple2, std::size_t... I>
@@ -30,7 +30,7 @@ class unzip {
 public:
   typedef Fn left_type;
 
-  unzip(Fn first, Fns... fns) : fns_(first, fns...) {}
+  unzip_into(Fn first, Fns... fns) : fns_(first, fns...) {}
 
   template <typename... Args>
   auto operator()(Args&&... args) {
@@ -58,7 +58,7 @@ public:
 
   template <typename T3>
   auto operator|(T3&& rhs) {
-    return pipe_pair<unzip<Fns...>, T3>(*this, std::forward<T3>(rhs));
+    return pipe_pair<unzip_into<Fns...>, T3>(*this, std::forward<T3>(rhs));
   }
 
 };
