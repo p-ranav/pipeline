@@ -20,14 +20,6 @@ int main() {
     pipeline();
   }
 
-  {
-    auto pipeline = 
-      bind([](int a, int b) { return a + b; }, 5, 10)
-      | /* square    */ [](int a) { return a * a; }
-      | /* print msg */ [](int result, std::string msg = "Result = ") { std::cout << msg << std::to_string(result) << "\n"; };
-    pipeline();
-  }
-
   // Using `pipe(...)` function
   {
     auto add = bind([](int a, int b) { return a + b; });
@@ -380,12 +372,12 @@ int main() {
   // Ignore result of previous stage in pipeline
  {
    auto add = bind([](int a, int b) { return a + b; });
-   auto print_result = [](int sum) { std::cout << "Sum = " << sum << "\n"; };
+   auto print_result = bind([](int sum) { std::cout << "Sum = " << sum << "\n"; });
 
    auto pipeline_1 = add | print_result;
    pipeline_1(4, 9);
 
-   auto greet = []() { std::cout << "Discarding args from previous stage\n"; };
+   auto greet = bind([]() { std::cout << "Discarding args from previous stage\n"; });
    auto pipeline_2 = add | greet;
    pipeline_2(6, 11);
  }
@@ -407,5 +399,31 @@ int main() {
 
   auto pipeline = A | fork(C, B) | D;
   pipeline();
+ }
+
+ {
+   auto doubler = bind([](int a) { return a * 2; });
+   std::deque<int> queue;
+
+   auto sink = bind([&queue](int a) mutable {
+     std::cout << a << "\n";
+     queue.push_back(a);
+     return a;
+   });
+
+   // auto pipeline = doubler | sink | doubler | sink;
+   auto pipeline = pipe(doubler, sink, doubler, sink);
+
+   pipeline(1);
+   pipeline(2);
+   pipeline(3);
+   pipeline(4);
+   pipeline(5);
+
+   for (auto& q: queue) {
+     std::cout << q << " ";
+   }
+   std::cout << "\n";
+
  }
 }

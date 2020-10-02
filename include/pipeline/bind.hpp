@@ -32,28 +32,9 @@ public:
     return std::is_invocable<Fn, A...>::value;
   }
 
-  // If rhs is bind or pipe, fork or fork_async
   template <typename T>
-  typename std::enable_if<
-    details::is_specialization<typename std::decay<T>::type, bind>::value || 
-    details::is_specialization<typename std::decay<T>::type, pipe_pair>::value || 
-    details::is_specialization<typename std::decay<T>::type, fork>::value ||
-    details::is_specialization<typename std::decay<T>::type, fork_async>::value, 
-  pipe_pair<bind<Fn, Args...>, T>>::type 
-  operator|(T&& rhs) {
+  auto operator|(T&& rhs) {
     return pipe_pair<bind<Fn, Args...>, T>(*this, std::forward<T>(rhs));
-  }
-
-  // If rhs is a lambda function
-  template <typename T>
-  typename std::enable_if<
-    !details::is_specialization<typename std::decay<T>::type, bind>::value &&
-    !details::is_specialization<typename std::decay<T>::type, pipe_pair>::value &&
-    !details::is_specialization<typename std::decay<T>::type, fork>::value &&
-    !details::is_specialization<typename std::decay<T>::type, fork_async>::value, 
-  pipe_pair<bind<Fn, Args...>, bind<T>>>::type 
-  operator|(T&& rhs) {
-    return pipe_pair<bind<Fn, Args...>, bind<T>>(*this, bind<T>(std::forward<T>(rhs)));
   }
 };
 

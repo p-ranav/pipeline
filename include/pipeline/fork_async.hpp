@@ -64,28 +64,9 @@ public:
     });
   }
 
-  // If rhs is bind or pipe, fork or fork_async
   template <typename T3>
-  typename std::enable_if<
-    details::is_specialization<typename std::decay<T3>::type, bind>::value || 
-    details::is_specialization<typename std::decay<T3>::type, pipe_pair>::value || 
-    details::is_specialization<typename std::decay<T3>::type, fork>::value ||
-    details::is_specialization<typename std::decay<T3>::type, fork_async>::value, 
-  pipe_pair<fork_async<Fn, Fns...>, T3>>::type 
-  operator|(T3&& rhs) {
+  auto operator|(T3&& rhs) {
     return pipe_pair<fork_async<Fn, Fns...>, T3>(*this, std::forward<T3>(rhs));
-  }
-
-  // If rhs is a lambda function
-  template <typename T3>
-  typename std::enable_if<
-    !details::is_specialization<typename std::decay<T3>::type, bind>::value &&
-    !details::is_specialization<typename std::decay<T3>::type, pipe_pair>::value &&
-    !details::is_specialization<typename std::decay<T3>::type, fork>::value &&
-    !details::is_specialization<typename std::decay<T3>::type, fork_async>::value, 
-  pipe_pair<fork_async<Fn, Fns...>, bind<T3>>>::type 
-  operator|(T3&& rhs) {
-    return pipe_pair<fork_async<Fn, Fns...>, bind<T3>>(*this, bind(std::forward<T3>(rhs)));
   }
 
 };

@@ -6,12 +6,6 @@ namespace pipeline {
 template <typename Fn, typename... Args>
 class bind;
 
-template <typename Fn, typename... Fns>
-class fork;
-
-template <typename Fn, typename... Fns>
-class fork_async;
-
 template <typename T1, typename T2>
 class pipe_pair {
   T1 left_;
@@ -75,28 +69,9 @@ public:
     }
   }
 
-  // If rhs is bind or pipe, fork or fork_async
   template <typename T3>
-  typename std::enable_if<
-    details::is_specialization<typename std::decay<T3>::type, bind>::value || 
-    details::is_specialization<typename std::decay<T3>::type, pipe_pair>::value || 
-    details::is_specialization<typename std::decay<T3>::type, fork>::value ||
-    details::is_specialization<typename std::decay<T3>::type, fork_async>::value, 
-  pipe_pair<pipe_pair<T1, T2>, T3>>::type 
-  operator|(T3&& rhs) {
+  auto operator|(T3&& rhs) {
     return pipe_pair<pipe_pair<T1, T2>, T3>(*this, std::forward<T3>(rhs));
-  }
-
-  // If rhs is a lambda function
-  template <typename T3>
-  typename std::enable_if<
-    !details::is_specialization<typename std::decay<T3>::type, bind>::value &&
-    !details::is_specialization<typename std::decay<T3>::type, pipe_pair>::value &&
-    !details::is_specialization<typename std::decay<T3>::type, fork>::value &&
-    !details::is_specialization<typename std::decay<T3>::type, fork_async>::value, 
-  pipe_pair<pipe_pair<T1, T2>, bind<T3>>>::type 
-  operator|(T3&& rhs) {
-    return pipe_pair<pipe_pair<T1, T2>, bind<T3>>(*this, bind(std::forward<T3>(rhs)));
   }
 };
 
