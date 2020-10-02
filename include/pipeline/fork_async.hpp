@@ -17,7 +17,6 @@ class pipe_pair;
 // - it simply returns a tuple of futures
 template <typename Fn, typename... Fns>
 class fork_async {
-  Fn first_;
   std::tuple<Fn, Fns...> fns_;
 
   // Takes a tuple of arguments          : args_tuple
@@ -46,7 +45,7 @@ class fork_async {
 public:
   typedef Fn left_type;
 
-  fork_async(Fn first, Fns... fns) : first_(first), fns_(first, fns...) {}
+  fork_async(Fn first, Fns... fns) : fns_(first, fns...) {}
 
   template <typename... Args>
   auto operator()(Args&&... args) {

@@ -14,7 +14,6 @@ class pipe_pair;
 
 template <typename Fn, typename... Fns>
 class fork {
-  Fn first_;
   std::tuple<Fn, Fns...> fns_;
 
   // Takes a tuple of arguments          : args_tuple
@@ -61,7 +60,7 @@ class fork {
 public:
   typedef Fn left_type;
 
-  fork(Fn first, Fns... fns) : first_(first), fns_(first, fns...) {}
+  fork(Fn first, Fns... fns) : fns_(first, fns...) {}
 
   template <typename... Args>
   auto operator()(Args&&... args) {

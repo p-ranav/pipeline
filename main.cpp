@@ -3,6 +3,7 @@
 #include <pipeline/pipe.hpp>
 #include <pipeline/fork.hpp>
 #include <pipeline/fork_async.hpp>
+#include <pipeline/unzip.hpp>
 #include <fstream>
 #include <optional>
 #include <sstream>
@@ -450,5 +451,27 @@ int main() {
    }
    std::cout << "\n";
 
+ }
+
+ {
+   // auto pipeline = foo | unzip_into(fork(f1, f2)) | print_results;
+
+   // output of foo: tuple(i_1, i_2, i_3)
+   // unzip_into(foo) will need to become:
+   // -> fork(bind(foo_1, i_1), bind(foo_2, i_2), bind(foo_3, i_3))
+
+   auto f1 = fn([](int a) { std::cout << "Running f1 " << a << "\n"; });
+   auto f2 = fn([](std::string a) { std::cout << "Running f2 " << a << "\n"; });
+
+  //  auto fns = std::make_tuple(f1, f2);
+
+  //  std::tuple<int, std::string> args{1, "Hello"};
+  //  auto unzipped_fork = unzip_test(args, fns);
+  //  unzipped_fork();
+
+   auto make_args = fn([] { return std::make_tuple(1, std::string{"Hello"}); });
+
+   auto pipeline = make_args | unzip(f1, f2) | fn([] { std::cout << "Done\n"; });
+   pipeline();
  }
 }
