@@ -463,15 +463,14 @@ int main() {
    auto f1 = fn([](int a) { std::cout << "Running f1 " << a << "\n"; });
    auto f2 = fn([](std::string a) { std::cout << "Running f2 " << a << "\n"; });
 
-  //  auto fns = std::make_tuple(f1, f2);
-
-  //  std::tuple<int, std::string> args{1, "Hello"};
-  //  auto unzipped_fork = unzip_test(args, fns);
-  //  unzipped_fork();
-
    auto make_args = fn([] { return std::make_tuple(1, std::string{"Hello"}); });
 
-   auto pipeline = make_args | unzip(f1, f2) | fn([] { std::cout << "Done\n"; });
+   auto pipeline = 
+      make_args 
+      | unzip(
+          fn([](int a) { std::cout << "Running f1 " << a << "\n"; }),
+          fn([](std::string a) { std::cout << "Running f2 " << a << "\n"; })) 
+      | fn([] { std::cout << "Done\n"; });
    pipeline();
  }
 }

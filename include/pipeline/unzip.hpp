@@ -38,7 +38,7 @@ public:
     // We have a parameter pack of args to UNZIP 
     // and then pass to each function - args...
     const auto bind_arg = [](auto&& fn, auto&& arg) {
-      return bind(fn, arg);
+      return bind(fn, std::move(arg));
     };
 
     auto unzipped_fork = apply2(bind_arg, fns_, std::tuple<Args...>(args...));
