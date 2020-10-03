@@ -571,17 +571,12 @@ int main() {
    });
 
    auto print_part = [](std::vector<int> v) {
+     std::cout << "Partition: ";
      for (auto& e : v) std::cout << e << " ";
      std::cout << "\n";
    };
 
    auto pipeline = sort | partition | unzip_into(print_part);
    pipeline(numbers);
-
-   for (const auto& n : numbers) {
-     std::cout << n << " ";
-   }
-   std::cout << "\n";
-
  }
 }
