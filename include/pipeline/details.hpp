@@ -62,7 +62,7 @@ constexpr auto apply(Tuple t, F f) {
 }
 
 template <size_t N, typename T>
-decltype(auto) make_repeated_tuple(T t) {
+constexpr decltype(auto) make_repeated_tuple(T t) {
   if constexpr (N == 1) {
     return t;
   } else {
