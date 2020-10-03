@@ -1,9 +1,4 @@
-#include <pipeline/fn.hpp>
-#include <pipeline/pipe.hpp>
-#include <pipeline/fork.hpp>
-#include <pipeline/fork_async.hpp>
-#include <pipeline/unzip_into.hpp>
-#include <pipeline/unzip_into_async.hpp>
+#include <pipeline/pipeline.hpp>
 #include <fstream>
 #include <optional>
 #include <sstream>
@@ -535,17 +530,17 @@ int main() {
  {
    std::vector<int> numbers{1, 2, 3, 4, 5};
 
-   auto doubler = fn([](auto& numbers) -> auto& {
+   auto doubler = [](auto& numbers) -> auto& {
      std::transform(numbers.begin(), numbers.end(), numbers.begin(), [](auto n) { return n * 2; });
      return numbers;
-   });
+   };
 
-   auto square = fn([](auto& numbers) -> auto& {
+   auto square = [](auto& numbers) -> auto& {
     std::transform(numbers.begin(), numbers.end(), numbers.begin(), [](auto n) { return n * n; });
     return numbers;
-   });
+   };
 
-   auto pipeline = doubler | square | doubler | square;
+   auto pipeline = pipeline::from(doubler) | square | doubler | square;
    pipeline(numbers);
 
    for (const auto& n : numbers) {
