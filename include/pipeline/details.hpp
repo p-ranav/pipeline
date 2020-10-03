@@ -61,6 +61,29 @@ constexpr auto apply(Tuple t, F f) {
   );
 }
 
+template <size_t N, typename Head, typename... T>
+struct repeated_tuple {
+  using tuple_type = typename repeated_tuple<N - 1, Head, Head, T...>::tuple_type;
+};
+
+template <typename Head, typename... T>
+struct repeated_tuple<1, Head, T...> {
+  using tuple_type = std::tuple<Head, T...>;
+};
+
+template <typename T>
+auto make_repeated_tuple_2(T t) {
+  return std::tuple<T, T>(t, t);
+}
+
+template <size_t N, typename T>
+decltype(auto) make_repeated_tuple(T t) {
+  if constexpr (N == 1) {
+    return t;
+  } else {
+    return make_repeated_tuple<N - 1>(std::tuple_cat(std::make_tuple(std::get<0>(t)), t));
+  }
+}
 
 template <typename F, typename... Args>
 constexpr bool is_invocable_on() {

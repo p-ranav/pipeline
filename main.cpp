@@ -554,4 +554,34 @@ int main() {
    std::cout << "\n";
 
  }
+
+  // Partition a vector and unzip the parts into a function
+ {
+   std::vector<int> numbers{5, 4, 3, 2, 1};
+
+   auto sort = fn([](auto& v) -> auto& {
+     std::sort(v.begin(), v.end());
+     return v;
+   });
+
+   auto partition = fn([](auto& v) {
+    auto left = std::vector(v.begin(), v.begin() + v.size() / 2);
+    auto right = std::vector(v.begin() + v.size() / 2, v.end());
+    return std::make_tuple(left, right);
+   });
+
+   auto print_part = [](std::vector<int> v) {
+     for (auto& e : v) std::cout << e << " ";
+     std::cout << "\n";
+   };
+
+   auto pipeline = sort | partition | unzip_into(print_part);
+   pipeline(numbers);
+
+   for (const auto& n : numbers) {
+     std::cout << n << " ";
+   }
+   std::cout << "\n";
+
+ }
 }
