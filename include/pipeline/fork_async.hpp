@@ -7,9 +7,6 @@
 
 namespace pipeline {
 
-template <typename T1, typename T2>
-class pipe_pair;
-
 // Very similar to fork
 // Unlike fork, fork_async::operator() does not wait for results
 // - it simply returns a tuple of futures

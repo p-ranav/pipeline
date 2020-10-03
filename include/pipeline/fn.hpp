@@ -3,16 +3,11 @@
 
 namespace pipeline {
 
-template <typename T1, typename T2>
-class pipe_pair;
-
 template <typename Fn>
 class fn {
   Fn fn_;
 
 public:
-  typedef Fn left_type;
-
   fn(Fn fn): fn_(fn) {}
 
   template <typename... T>

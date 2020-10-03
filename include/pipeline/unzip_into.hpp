@@ -7,12 +7,6 @@
 
 namespace pipeline {
 
-template <typename T1, typename T2>
-class pipe_pair;
-
-template <typename Fn, typename... Fns>
-class fork;
-
 template <typename Fn, typename... Fns>
 class unzip_into {
   std::tuple<Fn, Fns...> fns_;

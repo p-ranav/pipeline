@@ -3,9 +3,6 @@
 
 namespace pipeline {
 
-template <typename Fn>
-class fn;
-
 template <typename T1, typename T2>
 class pipe_pair {
   T1 left_;
@@ -25,12 +22,12 @@ public:
     if constexpr (details::is_tuple<left_result_type>::value) {
       // left_ result is a tuple
 
-      if constexpr (is_invocable_on<T2, left_result_type>()) {
+      if constexpr (details::is_invocable_on<T2, left_result_type>()) {
         // right_ takes a tuple
         return right_(left_(std::forward<T>(args)...));
       } else {
         // check if right is invocable without args
-        if constexpr (is_invocable_on<T2>()) {
+        if constexpr (details::is_invocable_on<T2>()) {
           left_(std::forward<T>(args)...);
           return right_();
         } else {
@@ -44,7 +41,7 @@ public:
       if constexpr (!std::is_same<left_result_type, void>::value) {
         // if right can be invoked without args
         // just call without args
-        if constexpr (is_invocable_on<T2>()) {
+        if constexpr (details::is_invocable_on<T2>()) {
           left_(std::forward<T>(args)...);
           return right_();
         } else {
@@ -55,17 +52,6 @@ public:
         left_(std::forward<T>(args)...);
         return right_();
       }
-    }
-  }
-
-  template <typename F, typename... Args>
-  static constexpr bool is_invocable_on() {
-    if constexpr (details::is_specialization<typename std::remove_reference<F>::type, fn>::value) {
-      // F is an `fn` type
-      return std::remove_reference<F>::type::template is_invocable_on<Args...>();
-    }
-    else {
-      return is_invocable_on<typename F::left_type, Args...>();
     }
   }
 
