@@ -1,4 +1,9 @@
-#include "single_include/pipeline/pipeline.hpp"
+#include <pipeline/fn.hpp>
+#include <pipeline/pipe.hpp>
+#include <pipeline/fork.hpp>
+#include <pipeline/fork_async.hpp>
+#include <pipeline/unzip_into.hpp>
+#include <pipeline/unzip_into_async.hpp>
 #include <fstream>
 #include <optional>
 #include <sstream>
@@ -192,37 +197,6 @@ int main() {
     pipeline(5);
     pipeline(10);
     pipeline(15);
-  }
-
-  {
-    auto read_file = fn([](std::string_view filename = "main.cpp") {
-      std::string buffer;
-
-      std::ifstream file(filename);
-      file.seekg(0, std::ios::end);
-      buffer.resize(file.tellg());
-      file.seekg(0);
-      file.read(buffer.data(), buffer.size());
-
-      return buffer;
-    });
-
-    auto read_next_line = fn([](auto contents) -> std::optional<std::string> {
-      static std::istringstream f(contents);
-      std::string line;    
-      if (std::getline(f, line)) {
-        return line;
-      }
-      return {};
-    });
-
-    auto print_line = fn([](auto line) { if (line.has_value()) std::cout << line.value() << "\n"; });
-
-    auto line_printer = read_file | read_next_line | print_line;
-
-    line_printer();
-    line_printer();
-    line_printer();
   }
 
   {
