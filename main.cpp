@@ -570,13 +570,18 @@ int main() {
     return std::make_tuple(left, right);
    });
 
-   auto print_part = [](std::vector<int> v) {
+   auto double_it = fn([](std::vector<int> v) {
+     std::transform(v.begin(), v.end(), v.begin(), [](auto n) { return n * 2; });
+     return v;
+   });
+
+   auto print_it = fn([](const std::vector<int>& v) {
      std::cout << "Partition: ";
      for (auto& e : v) std::cout << e << " ";
      std::cout << "\n";
-   };
+   });
 
-   auto pipeline = sort | partition | unzip_into(print_part);
+   auto pipeline = sort | partition | unzip_into(double_it | print_it);
    pipeline(numbers);
  }
 }
