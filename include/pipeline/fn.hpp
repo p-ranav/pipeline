@@ -16,8 +16,8 @@ public:
   fn(Fn fn): fn_(fn) {}
 
   template <typename... T>
-  auto operator()(T&&... args) {
-    return details::apply(std::forward_as_tuple(std::forward<T>(args)...), fn_);
+  decltype(auto) operator()(T&&... args) {
+    return fn_(args...);
   }
 
   template <typename... A>

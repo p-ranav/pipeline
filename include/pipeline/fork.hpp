@@ -1,13 +1,11 @@
 #pragma once
 #include <pipeline/details.hpp>
+#include <pipeline/fn.hpp>
 #include <thread>
 #include <future>
-#include <pipeline/bind.hpp>
+#include <functional>
 
 namespace pipeline {
-
-template <typename Fn, typename... Args>
-class bind;
 
 template <typename T1, typename T2>
 class pipe_pair;
@@ -29,7 +27,7 @@ class fork {
   // the function completed
   template <typename A, typename... T>
   auto do_async_await(A&& args_tuple, T&&... fns) {
-    return bind([](A args_tuple, T... fns) {
+    return fn(std::bind([](A args_tuple, T... fns) {
 
       auto unpack = [](auto tuple, auto fn) {
         return details::apply(tuple, fn);
@@ -54,7 +52,7 @@ class fork {
         return std::make_tuple((join_one(future))...);
       };
       return details::apply(std::move(futures), join);
-    }, std::forward<A>(args_tuple), std::forward<T>(fns)...);
+    }, std::forward<A>(args_tuple), std::forward<T>(fns)...));
   }
 
 public:
@@ -63,7 +61,7 @@ public:
   fork(Fn first, Fns... fns) : fns_(first, fns...) {}
 
   template <typename... Args>
-  auto operator()(Args&&... args) {
+  decltype(auto) operator()(Args&&... args) {
     // We have a tuple of functions to run in parallel           - fns_
     // We have a parameter pack of args to pass to each function - args...
     // 

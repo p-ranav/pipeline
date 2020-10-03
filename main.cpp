@@ -1,4 +1,3 @@
-#include <pipeline/bind.hpp>
 #include <pipeline/fn.hpp>
 #include <pipeline/pipe.hpp>
 #include <pipeline/fork.hpp>
@@ -15,7 +14,7 @@ using namespace pipeline;
 int main() {
  
   {
-    auto add = bind([](int a, int b) { return a + b; }, 5, 10);
+    auto add = fn(std::bind([](int a, int b) { return a + b; }, 5, 10));
     auto square = fn([](int a) { return a * a; });
     auto pretty_print_square = fn([](int result, std::string msg = "Result = ") { std::cout << msg << std::to_string(result) << "\n"; });
 
@@ -289,14 +288,14 @@ int main() {
       std::cout << std::get<0>(result).get() << " " << std::get<1>(result).get() << "\n";
     });
 
-    auto pipeline = fork(bind(factorial_async, 5), bind(factorial_async, 10)) | print_result;
+    auto pipeline = fork(fn(std::bind(factorial_async, 5)), fn(std::bind(factorial_async, 10))) | print_result;
     pipeline();
     // should print:
     // 120 3628800
   }
 
   {
-    bind greet = []() { std::cout << "Hello World!\n"; };
+    auto greet = fn([]() { std::cout << "Hello World!\n"; });
     auto pair = fork_async(greet, greet, greet);
     pair();
   }
@@ -491,6 +490,68 @@ int main() {
       make_args | unzip_into(f1, f2) | fork(print_f1_f2_results, unzip_into(print_f1_result, print_f2_result))
       | fn([] { std::cout << "Done\n"; });
    pipeline();
+
+ }
+
+  // Move unique_ptr through a pipeline
+ {
+
+   auto f1 = fn([]() { return std::unique_ptr<int>(new int(5)); });
+   auto f2 = fn([](auto&& ptr) { return std::move(ptr); });
+   auto pipeline = f1 | f2;
+   auto ptr = pipeline();
+   std::cout << *ptr << "\n";
+ }
+
+  // Mutating a reference
+ {
+   auto f1 = fn([](int& ref) -> int& { ref = ref * 2; return ref; });
+   auto f2 = fn([](int& ref) { ref = ref + 3; });
+
+   auto pipeline = f1 | f2;
+   int foo = 5;
+   // f1(foo);
+   // f2(foo);
+   pipeline(foo);
+   std::cout << "Foo after mutation: " << foo << "\n";
+
+ }
+
+  // Mutating a reference with a bind for scaling factor
+ {
+   auto f1 = fn(std::bind([](int& ref, int scale) -> int& { ref = ref * scale; return ref; }, std::placeholders::_1, std::placeholders::_2));
+   auto f2 = fn([](int& ref) { ref = ref + 3; });
+
+   auto pipeline = f1 | f2;
+   int foo = 5;
+   // f1(foo);
+   // f2(foo);
+   pipeline(foo, 2);
+   std::cout << "Foo after mutation: " << foo << "\n";
+
+ }
+
+  // Mutating a vector
+ {
+   std::vector<int> numbers{1, 2, 3, 4, 5};
+
+   auto doubler = fn([](auto& numbers) -> auto& {
+     std::transform(numbers.begin(), numbers.end(), numbers.begin(), [](auto n) { return n * 2; });
+     return numbers;
+   });
+
+   auto square = fn([](auto& numbers) -> auto& {
+    std::transform(numbers.begin(), numbers.end(), numbers.begin(), [](auto n) { return n * n; });
+    return numbers;
+   });
+
+   auto pipeline = doubler | square | doubler | square;
+   pipeline(numbers);
+
+   for (const auto& n : numbers) {
+     std::cout << n << " ";
+   }
+   std::cout << "\n";
 
  }
 }

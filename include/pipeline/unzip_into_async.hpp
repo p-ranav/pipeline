@@ -1,13 +1,11 @@
 #pragma once
 #include <pipeline/details.hpp>
+#include <pipeline/fn.hpp>
 #include <thread>
 #include <future>
-#include <pipeline/bind.hpp>
+#include <functional>
 
 namespace pipeline {
-
-template <typename Fn, typename... Args>
-class bind;
 
 template <typename T1, typename T2>
 class pipe_pair;
@@ -36,12 +34,12 @@ public:
   unzip_into_async(Fn first, Fns... fns) : fns_(first, fns...) {}
 
   template <typename... Args>
-  auto operator()(Args&&... args) {
+  decltype(auto) operator()(Args&&... args) {
     // We have a tuple of functions to run in parallel           - fns_
     // We have a parameter pack of args to UNZIP 
     // and then pass to each function - args...
     const auto bind_arg = [](auto&& fn, auto&& arg) {
-      return bind(fn, std::move(arg));
+      return pipeline::fn(std::bind(fn, std::move(arg)));
     };
 
     auto unzipped_fork_async = apply2(bind_arg, fns_, std::tuple<Args...>(args...));
