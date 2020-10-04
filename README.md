@@ -25,3 +25,5 @@ int main() {
 // prints:
 // Sum = 382, Diff = 250
 ```
+
+In the above code, the forked segments, i.e., `sum` and `diff`, run in parallel.
