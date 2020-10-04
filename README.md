@@ -33,8 +33,8 @@ int main() {
 // Sum = 30, Diff = 18
 ```
 
-```
-{12, 3} -> (doubler) -> {24, 6} -> (sum & diff in parallel) -> {30, 18} -> (print_results) -> "Sum = 30, Diff = 18"
+```cpp
+{12, 3} -> (double_it) -> {24, 6} -> (sum & diff in parallel) -> {30, 18} -> (print_results)
 ```
 
 In the above code,
