@@ -3,7 +3,7 @@ using namespace pipeline;
 #include <iostream>
 
 int main() {
-  auto generate_input = fn([] { return std::make_tuple(158, 33); });
+  auto generate_input = fn([] { return std::make_tuple(12, 3); });
 
   auto double_it = fn([](auto a, auto b) { return std::make_tuple(a * 2, b * 2); });
 
@@ -19,4 +19,4 @@ int main() {
 }
 
 // prints:
-// Sum = 382, Diff = 250
+// Sum = 30, Diff = 18
