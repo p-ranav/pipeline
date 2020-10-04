@@ -27,4 +27,6 @@ int main() {
 // Sum = 382, Diff = 250
 ```
 
-In the above code, the forked segments, i.e., `sum` and `diff`, run in parallel - futures are passed along to the next stage in the pipeline.
+***NOTE*** The output of `generate_input`, i.e., a tuple of ints, is unpacked and passed to the next stage in the pipeline.
+
+***NOTE*** Forked segments, i.e., `sum` and `diff`, run in parallel - futures are passed along to the next stage in the pipeline.
