@@ -162,10 +162,10 @@ template <typename T1, typename T2, typename... T> auto pipe(T1 &&t1, T2 &&t2, T
 
 } // namespace pipeline
 #pragma once
-// #include <pipeline/details.hpp>
-// #include <pipeline/fn.hpp>
 #include <functional>
 #include <future>
+// #include <pipeline/details.hpp>
+// #include <pipeline/fn.hpp>
 #include <thread>
 
 namespace pipeline {
@@ -239,10 +239,10 @@ public:
 
 } // namespace pipeline
 #pragma once
-// #include <pipeline/details.hpp>
-// #include <pipeline/fn.hpp>
 #include <functional>
 #include <future>
+// #include <pipeline/details.hpp>
+// #include <pipeline/fn.hpp>
 #include <thread>
 
 namespace pipeline {
@@ -302,10 +302,10 @@ public:
 
 } // namespace pipeline
 #pragma once
-// #include <pipeline/details.hpp>
-// #include <pipeline/fn.hpp>
 #include <functional>
 #include <future>
+// #include <pipeline/details.hpp>
+// #include <pipeline/fn.hpp>
 #include <thread>
 
 namespace pipeline {
@@ -391,10 +391,10 @@ public:
 
 } // namespace pipeline
 #pragma once
-// #include <pipeline/details.hpp>
-// #include <pipeline/fn.hpp>
 #include <functional>
 #include <future>
+// #include <pipeline/details.hpp>
+// #include <pipeline/fn.hpp>
 #include <thread>
 
 namespace pipeline {
