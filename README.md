@@ -1,5 +1,7 @@
 # pipeline
 
+## Getting Started
+
 `pipeline` is a library that lets you setup data processsing pipelines like this:
 
 ```cpp
@@ -27,6 +29,5 @@ int main() {
 // Sum = 382, Diff = 250
 ```
 
-***NOTE*** The output of `generate_input`, i.e., a tuple of ints, is unpacked and passed to the next stage in the pipeline.
-
-***NOTE*** Forked segments, i.e., `sum` and `diff`, run in parallel - futures are passed along to the next stage in the pipeline.
+* The output of `generate_input`, i.e., a tuple of ints, is unpacked and passed to the next stage in the pipeline.
+* Forked segments, i.e., `sum` and `diff`, run in parallel - futures are passed along to the next stage in the pipeline.
