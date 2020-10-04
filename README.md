@@ -3,6 +3,11 @@
 `pipeline` is a library that lets you setup data processsing pipelines like this:
 
 ```cpp
+#include <pipeline/pipeline.hpp>
+using namespace pipeline;
+
+// ...
+
 // auto get_camera_ids = fn([] { return std::make_tuple(0, 1, 2, 3); });
 // 
 // auto get_frame = fn([](size_t index) -> cv::Mat { /* get frame from camera */ });
