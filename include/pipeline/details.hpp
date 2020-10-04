@@ -1,14 +1,5 @@
 #pragma once
-#include <algorithm>
-#include <functional>
-#include <iostream>
-#include <numeric>
 #include <tuple>
-#include <type_traits>
-#include <vector>
-#include <cstddef>
-#include <tuple>
-#include <utility>
 
 namespace pipeline {
 
