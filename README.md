@@ -4,14 +4,6 @@
 
 `pipeline` is a `C++17` header-only template library that lets you setup data processsing pipelines. Simply include `<pipeline/pipeline.hpp>` and you're good to go. There is also a single_include version in `single_include/`.
 
-Here's a quick-start example for this library:
-
-Here, we construct the following pipeline:
-
-```cpp
-auto pipeline = generate_input | double_it | fork_async(sum, diff) | print_results;
-```
-
 Use `pipeline::fn` to wrap your functions and use `operator|` to chain these functions together into a pipeline. Constructs like `fork` and `unzip` can be used to setup concurrency / parallel processing of inputs. 
 
 ```cpp
