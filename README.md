@@ -27,4 +27,4 @@ int main() {
 // Sum = 382, Diff = 250
 ```
 
-In the above code, the forked segments, i.e., `sum` and `diff`, run in parallel.
+In the above code, the forked segments, i.e., `sum` and `diff`, run in parallel - futures are passed along to the next stage in the pipeline.
