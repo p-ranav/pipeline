@@ -1,8 +1,3 @@
-# pipeline
-
-`pipeline` is a library that lets you setup data processsing pipelines like this:
-
-```cpp
 #include <pipeline/pipeline.hpp>
 using namespace pipeline;
 #include <iostream>
@@ -25,6 +20,3 @@ int main() {
 
 // prints:
 // Sum = 382, Diff = 250
-```
-
-In the above code, the forked segments, i.e., `sum` and `diff`, run in parallel.
