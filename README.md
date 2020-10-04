@@ -6,19 +6,22 @@
 #include <pipeline/pipeline.hpp>
 using namespace pipeline;
 
-// ...
+int main() {
+  auto generate_input = fn([] { return std::make_tuple(158, 33); });
 
-// auto get_camera_ids = fn([] { return std::make_tuple(0, 1, 2, 3); });
-// 
-// auto get_frame = fn([](size_t index) -> cv::Mat { /* get frame from camera */ });
-// auto preprocess = fn([](auto&& frame) { /* preprocess frame */ });
-// auto predict_depth = fn([](auto&& frame) { /* predict depth */ });
-//
-// auto process_results = fn([](auto&& depth_1, auto&& depth_2, auto&& depth_3, auto&& depth_4) { /* process results */ });
+  auto double_it = fn([](auto a, auto b) { return std::make_tuple(a * 2, b * 2); });
 
-auto depth_ml_pipeline = get_frame | preprocess | predict_depth;
+  auto sum = fn([](auto a, auto b) { return a + b; });
+  auto diff = fn([](auto a, auto b) { return a - b; });
 
-auto pipeline = get_camera_ids | unzip_into(depth_ml_pipeline) | process_results;
+  auto print_results = fn([](auto sum, auto diff) {
+    std::cout << "Sum = " << sum << ", Diff = " << diff << std::endl;
+  });
 
-pipeline();
+  auto pipeline = generate_input | double_it | fork(sum, diff) | print_results;
+  pipeline();
+}
+
+// prints:
+// Sum = 382, Diff = 250
 ```
