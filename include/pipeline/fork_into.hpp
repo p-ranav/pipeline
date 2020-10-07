@@ -20,7 +20,7 @@ public:
 
     std::vector<std::future<result_type>> futures;
 
-    auto apply_fn = [&futures, args_tuple = std::tuple<Args...>(args...)](auto fn) {
+    auto apply_fn = [&futures, args_tuple = std::tuple<Args...>(std::forward<Args>(args)...)](auto fn) {
       auto unpack = [](auto tuple, auto fn) { return details::apply(tuple, fn); };
       futures.push_back(std::async(std::launch::async | std::launch::deferred, unpack, args_tuple, fn));
     };

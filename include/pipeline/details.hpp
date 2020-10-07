@@ -9,8 +9,6 @@ template <typename T1, typename T2> class pipe_pair;
 
 template <typename Fn, typename... Fns> class fork_into;
 
-template <typename Fn, typename... Fns> class fork_into_async;
-
 namespace details {
 
 // is_tuple constexpr check
@@ -51,8 +49,7 @@ template <typename F, typename... Args> constexpr bool is_invocable_on() {
     return std::remove_reference<F>::type::template is_invocable_on<Args...>();
   } else if constexpr (
       details::is_specialization<typename std::remove_reference<F>::type, pipe_pair>::value ||
-      details::is_specialization<typename std::remove_reference<F>::type, fork_into>::value ||
-      details::is_specialization<typename std::remove_reference<F>::type, fork_into_async>::value) {
+      details::is_specialization<typename std::remove_reference<F>::type, fork_into>::value) {
     return is_invocable_on<typename F::left_type, Args...>();
   } else {
     return std::is_invocable<F, Args...>::value;
