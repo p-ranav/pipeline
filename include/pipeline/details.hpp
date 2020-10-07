@@ -5,6 +5,8 @@ namespace pipeline {
 
 template <typename T1, typename T2> class pipe_pair;
 
+template <typename Fn, typename... Fns> class fork_into;
+
 namespace details {
 
 // is_tuple constexpr check

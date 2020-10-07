@@ -23,4 +23,5 @@ int main() {
     std::cout << n << " ";
   }
   std::cout << std::endl;
+  // 4 16 36 64 100
 }
