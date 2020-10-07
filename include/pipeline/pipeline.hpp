@@ -1,9 +1,6 @@
 #pragma once
 #include <pipeline/fn.hpp>
-#include <pipeline/fork.hpp>
-#include <pipeline/fork_async.hpp>
-#include <pipeline/pipe.hpp>
-#include <pipeline/unzip_into.hpp>
-#include <pipeline/unzip_into_async.hpp>
+#include <pipeline/pipe_pair.hpp>
+#include <pipeline/fork_into.hpp>
 #include <pipeline/for_each.hpp>
-#include <pipeline/for_each_async.hpp>
+#include <pipeline/unzip_into.hpp>

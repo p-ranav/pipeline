@@ -12,8 +12,8 @@ template <typename Fn, typename... Fns> class unzip_into {
 
   template <class F, class Tuple1, class Tuple2, std::size_t... I>
   auto apply2_impl(F &&f, Tuple1 &&t1, Tuple2 &&t2, std::index_sequence<I...>) {
-    return fork((std::forward<F>(f)(std::get<I>(std::forward<Tuple1>(t1)),
-                                    std::get<I>(std::forward<Tuple2>(t2))))...);
+    return fork_into((std::forward<F>(f)(std::get<I>(std::forward<Tuple1>(t1)),
+                                         std::get<I>(std::forward<Tuple2>(t2))))...);
   }
 
   template <class F, class Tuple1, class Tuple2>
@@ -24,23 +24,21 @@ template <typename Fn, typename... Fns> class unzip_into {
   }
 
 public:
-  typedef Fn left_type;
-
   unzip_into(Fn first, Fns... fns) : fns_(first, fns...) {}
 
-  template <typename... Args> decltype(auto) operator()(Args &&... args) {
+  template <typename Tuple> decltype(auto) operator()(Tuple&& tuple) {
     // We have a tuple of functions to run in parallel - fns_
-    // We have a parameter pack of args to UNZIP
-    // and then pass to each function - args...
+    // We have a tuple of args to UNZIP
+    // and then pass to each function - tuple_element
     const auto bind_arg = [](auto &&fn, auto &&arg) {
       return pipeline::fn(std::bind(fn, std::move(arg)));
     };
 
-    if constexpr (std::tuple_size<std::tuple<Fn, Fns...>>::value == sizeof...(args)) {
-      // sizeof(tuple of fns) == sizeof(args)
+    if constexpr (std::tuple_size<std::tuple<Fn, Fns...>>::value == std::tuple_size<Tuple>::value) {
+      // sizeof(tuple of fns) == sizeof(tuple)
       // 1-1 mapping
 
-      auto unzipped_fork = apply2(bind_arg, fns_, std::tuple<Args...>(std::forward<Args>(args)...));
+      auto unzipped_fork = apply2(bind_arg, fns_, tuple);
 
       // Let's say the input args were (arg1, arg2, arg3, ...)
       // And we have functions (fn1, fn2, fn3, ...)
@@ -72,12 +70,12 @@ public:
       // Once the fork is constructed, simply run the fork
 
       auto repeated_tuple_fn =
-          details::make_repeated_tuple<sizeof...(args)>(std::make_tuple(std::get<0>(fns_)));
+          details::make_repeated_tuple<std::tuple_size<Tuple>::value>(std::make_tuple(std::get<0>(fns_)));
       auto unzipped_fork =
-          apply2(bind_arg, repeated_tuple_fn, std::tuple<Args...>(std::forward<Args>(args)...));
+          apply2(bind_arg, repeated_tuple_fn, tuple);
       return unzipped_fork();
     } else {
-      static_assert(std::tuple_size<std::tuple<Fn, Fns...>>::value == sizeof...(args));
+      static_assert(std::tuple_size<std::tuple<Fn, Fns...>>::value == std::tuple_size<Tuple>::value);
     }
   }
 
