@@ -547,7 +547,7 @@ public:
     for (auto& arg: std::forward<Container>(args)) {
       futures.push_back(std::async(std::launch::async | std::launch::deferred, fn_, arg));
     }
-    return std::move(futures);
+    return futures;
   }
 };  
 
