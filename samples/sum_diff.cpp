@@ -14,7 +14,7 @@ int main() {
     std::cout << "Sum = " << sum << ", Diff = " << diff << std::endl;
   });
 
-  auto pipeline = generate_input | double_it | fork(sum, diff) | print_results;
+  auto pipeline = generate_input | double_it | fork_into(sum, diff) | print_results;
   pipeline();
 }
 

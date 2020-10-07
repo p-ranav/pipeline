@@ -14,7 +14,7 @@ int main() {
     std::cout << "Sum = " << sum.get() << ", Diff = " << diff.get() << std::endl;
   });
 
-  auto pipeline = generate_input | double_it | fork_async(sum, diff) | print_results;
+  auto pipeline = generate_input | double_it | fork_into_async(sum, diff) | print_results;
   pipeline();
 }
 

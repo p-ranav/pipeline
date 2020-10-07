@@ -7,13 +7,9 @@ template <typename Fn> class fn;
 
 template <typename T1, typename T2> class pipe_pair;
 
-template <typename Fn, typename... Fns> class fork;
+template <typename Fn, typename... Fns> class fork_into;
 
-template <typename Fn, typename... Fns> class fork_async;
-
-template <typename Fn, typename... Fns> class unzip_into;
-
-template <typename Fn, typename... Fns> class unzip_into_async;
+template <typename Fn, typename... Fns> class fork_into_async;
 
 namespace details {
 
@@ -55,15 +51,24 @@ template <typename F, typename... Args> constexpr bool is_invocable_on() {
     return std::remove_reference<F>::type::template is_invocable_on<Args...>();
   } else if constexpr (
       details::is_specialization<typename std::remove_reference<F>::type, pipe_pair>::value ||
-      details::is_specialization<typename std::remove_reference<F>::type, fork>::value ||
-      details::is_specialization<typename std::remove_reference<F>::type, fork_async>::value ||
-      details::is_specialization<typename std::remove_reference<F>::type, unzip_into>::value ||
-      details::is_specialization<typename std::remove_reference<F>::type,
-                                 unzip_into_async>::value) {
+      details::is_specialization<typename std::remove_reference<F>::type, fork_into>::value ||
+      details::is_specialization<typename std::remove_reference<F>::type, fork_into_async>::value) {
     return is_invocable_on<typename F::left_type, Args...>();
   } else {
     return std::is_invocable<F, Args...>::value;
   }
+}
+
+template<typename T, typename F, int... Is>
+void
+for_each(T&& t, F f, std::integer_sequence<int, Is...>) {
+  auto l = { (f(std::get<Is>(t)), 0)... };
+}
+
+template<typename... Ts, typename F>
+void
+for_each_in_tuple(std::tuple<Ts...> const& t, F f) {
+  for_each(t, f, std::make_integer_sequence<int, sizeof...(Ts)>());
 }
 
 } // namespace details

@@ -23,6 +23,8 @@ int main() {
     pipeline();
   }
 
+#if 0
+
   // Using `pipe(...)` function
   {
     auto add = fn([](int a, int b) { return a + b; });
@@ -553,4 +555,6 @@ int main() {
     auto i_seq = std::make_index_sequence<10>();
     auto tup = std::make_tuple(i_seq);
   }
+
+#endif
 }
