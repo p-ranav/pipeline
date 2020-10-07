@@ -10,5 +10,8 @@ target_link_libraries(pipe_reference PRIVATE pipeline::pipeline)
 add_executable(unzip_into unzip_into.cpp)
 target_link_libraries(unzip_into PRIVATE pipeline::pipeline)
 
-add_executable(unzip_into_single unzip_into_single.cpp)
-target_link_libraries(unzip_into_single PRIVATE pipeline::pipeline)
+add_executable(unzip_into_return unzip_into_return.cpp)
+target_link_libraries(unzip_into_return PRIVATE pipeline::pipeline)
+
+add_executable(unzip_into_single_functor unzip_into_single_functor.cpp)
+target_link_libraries(unzip_into_single_functor PRIVATE pipeline::pipeline)
