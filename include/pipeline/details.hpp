@@ -3,11 +3,7 @@
 
 namespace pipeline {
 
-template <typename Fn> class fn;
-
 template <typename T1, typename T2> class pipe_pair;
-
-template <typename Fn, typename... Fns> class fork_into;
 
 namespace details {
 
@@ -40,19 +36,6 @@ template <size_t N, typename T> constexpr decltype(auto) make_repeated_tuple(T t
     return t;
   } else {
     return make_repeated_tuple<N - 1>(std::tuple_cat(std::make_tuple(std::get<0>(t)), t));
-  }
-}
-
-template <typename F, typename... Args> constexpr bool is_invocable_on() {
-  if constexpr (details::is_specialization<typename std::remove_reference<F>::type, fn>::value) {
-    // F is an `fn` type
-    return std::remove_reference<F>::type::template is_invocable_on<Args...>();
-  } else if constexpr (
-      details::is_specialization<typename std::remove_reference<F>::type, pipe_pair>::value ||
-      details::is_specialization<typename std::remove_reference<F>::type, fork_into>::value) {
-    return is_invocable_on<typename F::left_type, Args...>();
-  } else {
-    return std::is_invocable<F, Args...>::value;
   }
 }
 

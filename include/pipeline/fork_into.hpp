@@ -11,8 +11,6 @@ template <typename Fn, typename... Fns> class fork_into {
   std::tuple<Fn, Fns...> fns_;
 
 public:
-  typedef Fn left_type;
-
   fork_into(Fn first, Fns... fns) : fns_(first, fns...) {}
 
   template <typename... Args> decltype(auto) operator()(Args&&... args) {

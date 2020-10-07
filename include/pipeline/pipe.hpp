@@ -8,48 +8,16 @@ template <typename T1, typename T2> class pipe_pair {
   T2 right_;
 
 public:
-  typedef T1 left_type;
-  typedef T2 right_type;
-
   pipe_pair(T1 left, T2 right) : left_(left), right_(right) {}
 
   template <typename... T> decltype(auto) operator()(T &&... args) {
     typedef typename std::result_of<T1(T...)>::type left_result_type;
-
-    // check if left_ result is a tuple
-    if constexpr (details::is_tuple<left_result_type>::value) {
-      // left_ result is a tuple
-
-      if constexpr (details::is_invocable_on<T2, left_result_type>()) {
-        // right_ takes a tuple
-        return right_(left_(std::forward<T>(args)...));
-      } else {
-        // check if right is invocable without args
-        if constexpr (details::is_invocable_on<T2>()) {
-          left_(std::forward<T>(args)...);
-          return right_();
-        } else {
-          // unpack tuple into parameter pack and call right_
-          return details::apply(left_(std::forward<T>(args)...), right_);
-        }
-      }
+    
+    if constexpr (!std::is_same<left_result_type, void>::value) {
+      return right_(left_(std::forward<T>(args)...));
     } else {
-      // left_result_type not a tuple
-      // call right_ with left_result
-      if constexpr (!std::is_same<left_result_type, void>::value) {
-        // if right can be invoked without args
-        // just call without args
-        if constexpr (details::is_invocable_on<T2>()) {
-          left_(std::forward<T>(args)...);
-          return right_();
-        } else {
-          return right_(left_(std::forward<T>(args)...));
-        }
-      } else {
-        // left result is void
-        left_(std::forward<T>(args)...);
-        return right_();
-      }
+      left_(std::forward<T>(args)...);
+      return right_();
     }
   }
 

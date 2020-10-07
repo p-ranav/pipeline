@@ -3,11 +3,7 @@
 
 namespace pipeline {
 
-template <typename Fn> class fn;
-
 template <typename T1, typename T2> class pipe_pair;
-
-template <typename Fn, typename... Fns> class fork_into;
 
 namespace details {
 
@@ -40,19 +36,6 @@ template <size_t N, typename T> constexpr decltype(auto) make_repeated_tuple(T t
     return t;
   } else {
     return make_repeated_tuple<N - 1>(std::tuple_cat(std::make_tuple(std::get<0>(t)), t));
-  }
-}
-
-template <typename F, typename... Args> constexpr bool is_invocable_on() {
-  if constexpr (details::is_specialization<typename std::remove_reference<F>::type, fn>::value) {
-    // F is an `fn` type
-    return std::remove_reference<F>::type::template is_invocable_on<Args...>();
-  } else if constexpr (
-      details::is_specialization<typename std::remove_reference<F>::type, pipe_pair>::value ||
-      details::is_specialization<typename std::remove_reference<F>::type, fork_into>::value) {
-    return is_invocable_on<typename F::left_type, Args...>();
-  } else {
-    return std::is_invocable<F, Args...>::value;
   }
 }
 
@@ -104,48 +87,16 @@ template <typename T1, typename T2> class pipe_pair {
   T2 right_;
 
 public:
-  typedef T1 left_type;
-  typedef T2 right_type;
-
   pipe_pair(T1 left, T2 right) : left_(left), right_(right) {}
 
   template <typename... T> decltype(auto) operator()(T &&... args) {
     typedef typename std::result_of<T1(T...)>::type left_result_type;
 
-    // check if left_ result is a tuple
-    if constexpr (details::is_tuple<left_result_type>::value) {
-      // left_ result is a tuple
-
-      if constexpr (details::is_invocable_on<T2, left_result_type>()) {
-        // right_ takes a tuple
-        return right_(left_(std::forward<T>(args)...));
-      } else {
-        // check if right is invocable without args
-        if constexpr (details::is_invocable_on<T2>()) {
-          left_(std::forward<T>(args)...);
-          return right_();
-        } else {
-          // unpack tuple into parameter pack and call right_
-          return details::apply(left_(std::forward<T>(args)...), right_);
-        }
-      }
+    if constexpr (!std::is_same<left_result_type, void>::value) {
+      return right_(left_(std::forward<T>(args)...));
     } else {
-      // left_result_type not a tuple
-      // call right_ with left_result
-      if constexpr (!std::is_same<left_result_type, void>::value) {
-        // if right can be invoked without args
-        // just call without args
-        if constexpr (details::is_invocable_on<T2>()) {
-          left_(std::forward<T>(args)...);
-          return right_();
-        } else {
-          return right_(left_(std::forward<T>(args)...));
-        }
-      } else {
-        // left result is void
-        left_(std::forward<T>(args)...);
-        return right_();
-      }
+      left_(std::forward<T>(args)...);
+      return right_();
     }
   }
 
@@ -176,8 +127,6 @@ template <typename Fn, typename... Fns> class fork_into {
   std::tuple<Fn, Fns...> fns_;
 
 public:
-  typedef Fn left_type;
-
   fork_into(Fn first, Fns... fns) : fns_(first, fns...) {}
 
   template <typename... Args> decltype(auto) operator()(Args&&... args) {
@@ -253,32 +202,6 @@ public:
       }
       return results;
     }
-  }
-};  
-
-}
-#pragma once
-// #include <pipeline/details.hpp>
-// #include <pipeline/fn.hpp>
-#include <vector>
-
-namespace pipeline {
-
-template <typename Fn>
-class for_each_async {
-  Fn fn_;
-
-public:
-  for_each_async(Fn fn) : fn_(fn) {}
-
-  template <typename Container>
-  decltype(auto) operator()(Container&& args) {
-    typedef typename std::result_of<Fn(typename Container::value_type&)>::type result_type;
-    std::vector<std::future<result_type>> futures;
-    for (auto& arg: std::forward<Container>(args)) {
-      futures.push_back(std::async(std::launch::async | std::launch::deferred, fn_, arg));
-    }
-    return futures;
   }
 };  
 
