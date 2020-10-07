@@ -5,3 +5,5 @@
 #include <pipeline/pipe.hpp>
 #include <pipeline/unzip_into.hpp>
 #include <pipeline/unzip_into_async.hpp>
+#include <pipeline/for_each.hpp>
+#include <pipeline/for_each_async.hpp>

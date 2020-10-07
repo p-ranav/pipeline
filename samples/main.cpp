@@ -544,4 +544,13 @@ int main() {
     auto pipeline = sort | partition | unzip_into(double_it | print_it);
     pipeline(numbers);
   }
+
+  {
+    // fork  -> single_input -> multiple_functions(single_input) in parallel
+    // unzip -> packed_input -> unpacked_input -> multiple_functions(unpacked_input) in parallel
+    // forward -> input -> output
+
+    auto i_seq = std::make_index_sequence<10>();
+    auto tup = std::make_tuple(i_seq);
+  }
 }
