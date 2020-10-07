@@ -14,9 +14,9 @@ public:
 
   template <typename Container>
   decltype(auto) operator()(Container&& args) {
-    typedef typename std::result_of<Fn(const typename Container::value_type&)>::type result_type;
+    typedef typename std::result_of<Fn(typename Container::value_type&)>::type result_type;
     std::vector<std::future<result_type>> futures;
-    for (const auto& arg: std::forward<Container>(args)) {
+    for (auto& arg: std::forward<Container>(args)) {
       futures.push_back(std::async(std::launch::async | std::launch::deferred, fn_, arg));
     }
     return std::move(futures);
