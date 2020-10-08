@@ -8,8 +8,7 @@ int main() {
     return std::vector<int>{1, 2, 3, 4, 5};
   });
 
-  auto print_value = fn([](const auto& v) {
-    std::cout << v << "\n";
+  auto to_string = fn([](const auto& v) {
     return std::to_string(v);
   });
 
@@ -21,7 +20,7 @@ int main() {
     std::cout << "}\n";
   });
 
-  auto pipeline = generate_input | for_each(print_value) | print_string; // for_each returns a vector of results
+  auto pipeline = generate_input | for_each(to_string) | print_string; // for_each returns a vector of results
   pipeline();
 
 }
