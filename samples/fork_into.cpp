@@ -4,6 +4,8 @@ using namespace pipeline;
 
 int main() {
 
+  auto generate_input = fn([] { return std::vector<int>{1, 2, 3, 4, 5}; });
+
   auto double_it = [](auto vec) {
     std::cout << "Doubling\n";
     std::transform(vec.begin(), vec.end(), vec.begin(), [](auto &e) { return e * 2; });
@@ -31,6 +33,6 @@ int main() {
     std::cout << "\n";
   };
 
-  auto pipeline = from(std::vector<int>{1, 2, 3, 4, 5}) | fork_into(double_it, square_it) | print_vecs;
+  auto pipeline = generate_input | fork_into(double_it, square_it) | print_vecs;
   pipeline();
 }
