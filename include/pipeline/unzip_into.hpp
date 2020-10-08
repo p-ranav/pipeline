@@ -26,7 +26,7 @@ template <typename Fn, typename... Fns> class unzip_into {
 public:
   unzip_into(Fn first, Fns... fns) : fns_(first, fns...) {}
 
-  template <typename Tuple> decltype(auto) operator()(Tuple&& tuple) {
+  template <typename Tuple> decltype(auto) operator()(Tuple &&tuple) {
     // We have a tuple of functions to run in parallel - fns_
     // We have a tuple of args to UNZIP
     // and then pass to each function - tuple_element
@@ -69,13 +69,13 @@ public:
       //
       // Once the fork is constructed, simply run the fork
 
-      auto repeated_tuple_fn =
-          details::make_repeated_tuple<std::tuple_size<Tuple>::value>(std::make_tuple(std::get<0>(fns_)));
-      auto unzipped_fork =
-          apply2(bind_arg, repeated_tuple_fn, tuple);
+      auto repeated_tuple_fn = details::make_repeated_tuple<std::tuple_size<Tuple>::value>(
+          std::make_tuple(std::get<0>(fns_)));
+      auto unzipped_fork = apply2(bind_arg, repeated_tuple_fn, tuple);
       return unzipped_fork();
     } else {
-      static_assert(std::tuple_size<std::tuple<Fn, Fns...>>::value == std::tuple_size<Tuple>::value);
+      static_assert(std::tuple_size<std::tuple<Fn, Fns...>>::value ==
+                    std::tuple_size<Tuple>::value);
     }
   }
 

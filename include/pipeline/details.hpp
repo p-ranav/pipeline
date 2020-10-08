@@ -41,15 +41,12 @@ template <size_t N, typename T> constexpr decltype(auto) make_repeated_tuple(T t
   }
 }
 
-template<typename T, typename F, int... Is>
-void
-for_each(T&& t, F f, std::integer_sequence<int, Is...>) {
-  auto l = { (f(std::get<Is>(t)), 0)... };
+template <typename T, typename F, int... Is>
+void for_each(T &&t, F f, std::integer_sequence<int, Is...>) {
+  auto l = {(f(std::get<Is>(t)), 0)...};
 }
 
-template<typename... Ts, typename F>
-void
-for_each_in_tuple(std::tuple<Ts...> const& t, F f) {
+template <typename... Ts, typename F> void for_each_in_tuple(std::tuple<Ts...> const &t, F f) {
   for_each(t, f, std::make_integer_sequence<int, sizeof...(Ts)>());
 }
 

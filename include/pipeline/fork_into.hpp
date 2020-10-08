@@ -13,25 +13,27 @@ template <typename Fn, typename... Fns> class fork_into {
 public:
   fork_into(Fn first, Fns... fns) : fns_(first, fns...) {}
 
-  template <typename... Args> decltype(auto) operator()(Args&&... args) {
+  template <typename... Args> decltype(auto) operator()(Args &&... args) {
     typedef typename std::result_of<Fn(Args...)>::type result_type;
 
     std::vector<std::future<result_type>> futures;
 
-    auto apply_fn = [&futures, args_tuple = std::tuple<Args...>(std::forward<Args>(args)...)](auto fn) {
+    auto apply_fn = [&futures,
+                     args_tuple = std::tuple<Args...>(std::forward<Args>(args)...)](auto fn) {
       auto unpack = [](auto tuple, auto fn) { return details::apply(tuple, fn); };
-      futures.push_back(std::async(std::launch::async | std::launch::deferred, unpack, args_tuple, fn));
+      futures.push_back(
+          std::async(std::launch::async | std::launch::deferred, unpack, args_tuple, fn));
     };
 
     details::for_each_in_tuple(fns_, apply_fn);
 
     if constexpr (std::is_same<result_type, void>::value) {
-      for (auto& f: futures) {
+      for (auto &f : futures) {
         f.get();
       }
     } else {
       std::vector<result_type> results;
-      for (auto& f: futures) {
+      for (auto &f : futures) {
         results.push_back(f.get());
       }
       return results;

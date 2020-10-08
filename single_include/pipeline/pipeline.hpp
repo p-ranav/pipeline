@@ -41,15 +41,12 @@ template <size_t N, typename T> constexpr decltype(auto) make_repeated_tuple(T t
   }
 }
 
-template<typename T, typename F, int... Is>
-void
-for_each(T&& t, F f, std::integer_sequence<int, Is...>) {
-  auto l = { (f(std::get<Is>(t)), 0)... };
+template <typename T, typename F, int... Is>
+void for_each(T &&t, F f, std::integer_sequence<int, Is...>) {
+  auto l = {(f(std::get<Is>(t)), 0)...};
 }
 
-template<typename... Ts, typename F>
-void
-for_each_in_tuple(std::tuple<Ts...> const& t, F f) {
+template <typename... Ts, typename F> void for_each_in_tuple(std::tuple<Ts...> const &t, F f) {
   for_each(t, f, std::make_integer_sequence<int, sizeof...(Ts)>());
 }
 
@@ -93,7 +90,7 @@ public:
 
   template <typename... T> decltype(auto) operator()(T &&... args) {
     typedef typename std::result_of<T1(T...)>::type left_result_type;
-    
+
     if constexpr (!std::is_same<left_result_type, void>::value) {
       return right_(left_(std::forward<T>(args)...));
     } else {
@@ -131,25 +128,27 @@ template <typename Fn, typename... Fns> class fork_into {
 public:
   fork_into(Fn first, Fns... fns) : fns_(first, fns...) {}
 
-  template <typename... Args> decltype(auto) operator()(Args&&... args) {
+  template <typename... Args> decltype(auto) operator()(Args &&... args) {
     typedef typename std::result_of<Fn(Args...)>::type result_type;
 
     std::vector<std::future<result_type>> futures;
 
-    auto apply_fn = [&futures, args_tuple = std::tuple<Args...>(std::forward<Args>(args)...)](auto fn) {
+    auto apply_fn = [&futures,
+                     args_tuple = std::tuple<Args...>(std::forward<Args>(args)...)](auto fn) {
       auto unpack = [](auto tuple, auto fn) { return details::apply(tuple, fn); };
-      futures.push_back(std::async(std::launch::async | std::launch::deferred, unpack, args_tuple, fn));
+      futures.push_back(
+          std::async(std::launch::async | std::launch::deferred, unpack, args_tuple, fn));
     };
 
     details::for_each_in_tuple(fns_, apply_fn);
 
     if constexpr (std::is_same<result_type, void>::value) {
-      for (auto& f: futures) {
+      for (auto &f : futures) {
         f.get();
       }
     } else {
       std::vector<result_type> results;
-      for (auto& f: futures) {
+      for (auto &f : futures) {
         results.push_back(f.get());
       }
       return results;
@@ -169,45 +168,42 @@ public:
 
 namespace pipeline {
 
-template <typename Fn>
-class for_each {
+template <typename Fn> class for_each {
   Fn fn_;
 
 public:
   for_each(Fn fn) : fn_(fn) {}
 
-  template <typename Container>
-  decltype(auto) operator()(Container&& args) {
-    typedef typename std::result_of<Fn(typename Container::value_type&)>::type result_type;
+  template <typename Container> decltype(auto) operator()(Container &&args) {
+    typedef typename std::result_of<Fn(typename Container::value_type &)>::type result_type;
 
     if constexpr (std::is_same<result_type, void>::value) {
       // result type is void
       std::vector<std::future<result_type>> futures;
-      for (auto& arg: std::forward<Container>(args)) {
+      for (auto &arg : std::forward<Container>(args)) {
         futures.push_back(std::async(std::launch::async | std::launch::deferred, fn_, arg));
       }
 
-      for (auto& f: futures) {
+      for (auto &f : futures) {
         f.get();
       }
-    }
-    else {
+    } else {
       // result is not void
       std::vector<result_type> results;
       std::vector<std::future<result_type>> futures;
-      for (auto& arg: std::forward<Container>(args)) {
+      for (auto &arg : std::forward<Container>(args)) {
         futures.push_back(std::async(std::launch::async | std::launch::deferred, fn_, arg));
       }
 
-      for (auto& f: futures) {
+      for (auto &f : futures) {
         results.push_back(f.get());
       }
       return results;
     }
   }
-};  
+};
 
-}
+} // namespace pipeline
 #pragma once
 #include <functional>
 #include <future>
@@ -236,7 +232,7 @@ template <typename Fn, typename... Fns> class unzip_into {
 public:
   unzip_into(Fn first, Fns... fns) : fns_(first, fns...) {}
 
-  template <typename Tuple> decltype(auto) operator()(Tuple&& tuple) {
+  template <typename Tuple> decltype(auto) operator()(Tuple &&tuple) {
     // We have a tuple of functions to run in parallel - fns_
     // We have a tuple of args to UNZIP
     // and then pass to each function - tuple_element
@@ -279,13 +275,13 @@ public:
       //
       // Once the fork is constructed, simply run the fork
 
-      auto repeated_tuple_fn =
-          details::make_repeated_tuple<std::tuple_size<Tuple>::value>(std::make_tuple(std::get<0>(fns_)));
-      auto unzipped_fork =
-          apply2(bind_arg, repeated_tuple_fn, tuple);
+      auto repeated_tuple_fn = details::make_repeated_tuple<std::tuple_size<Tuple>::value>(
+          std::make_tuple(std::get<0>(fns_)));
+      auto unzipped_fork = apply2(bind_arg, repeated_tuple_fn, tuple);
       return unzipped_fork();
     } else {
-      static_assert(std::tuple_size<std::tuple<Fn, Fns...>>::value == std::tuple_size<Tuple>::value);
+      static_assert(std::tuple_size<std::tuple<Fn, Fns...>>::value ==
+                    std::tuple_size<Tuple>::value);
     }
   }
 

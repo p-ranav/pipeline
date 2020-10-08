@@ -1,5 +1,5 @@
-#include <pipeline/pipeline.hpp>
 #include <iostream>
+#include <pipeline/pipeline.hpp>
 #include <string>
 using namespace pipeline;
 
@@ -12,5 +12,4 @@ int main() {
 
   auto pipeline = generate_input | unzip_into(printer);
   pipeline();
-
 }

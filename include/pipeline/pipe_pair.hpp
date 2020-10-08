@@ -12,7 +12,7 @@ public:
 
   template <typename... T> decltype(auto) operator()(T &&... args) {
     typedef typename std::result_of<T1(T...)>::type left_result_type;
-    
+
     if constexpr (!std::is_same<left_result_type, void>::value) {
       return right_(left_(std::forward<T>(args)...));
     } else {
