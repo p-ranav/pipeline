@@ -2,6 +2,7 @@
 #include <pipeline/details.hpp>
 #include <pipeline/fn.hpp>
 #include <vector>
+#include <future>
 
 namespace pipeline {
 

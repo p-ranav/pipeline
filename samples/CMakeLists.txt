@@ -7,8 +7,8 @@ target_link_libraries(for_each_return PRIVATE pipeline::pipeline)
 add_executable(fork_into fork_into.cpp)
 target_link_libraries(fork_into PRIVATE pipeline::pipeline)
 
-add_executable(pipe pipe.cpp)
-target_link_libraries(pipe PRIVATE pipeline::pipeline)
+add_executable(pipe_simple pipe_simple.cpp)
+target_link_libraries(pipe_simple PRIVATE pipeline::pipeline)
 
 add_executable(pipe_reference pipe_reference.cpp)
 target_link_libraries(pipe_reference PRIVATE pipeline::pipeline)
