@@ -21,7 +21,7 @@ int main() {
     std::cout << "}\n";
   });
 
-  auto pipeline = generate_input | for_each(print_value) | print_string;
+  auto pipeline = generate_input | for_each(print_value) | print_string; // for_each returns a vector of results
   pipeline();
 
 }
