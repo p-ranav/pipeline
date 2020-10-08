@@ -78,6 +78,31 @@ public:
 } // namespace pipeline
 #pragma once
 // #include <pipeline/details.hpp>
+// #include <pipeline/fn.hpp>
+#include <functional>
+
+namespace pipeline {
+
+template <typename T>
+auto from(T&& value) {
+  return fn(std::bind([](auto&& value) -> auto&& { 
+    return std::forward<decltype(value)>(value); 
+  }, std::forward<T>(value)));
+}
+
+template <typename T>
+auto from(T& value) {
+  return fn([&value] () -> T& { return value; });
+}
+
+template <typename T>
+auto from(const T& value) {
+  return fn([&value] () -> const T& { return value; });
+}
+
+}
+#pragma once
+// #include <pipeline/details.hpp>
 
 namespace pipeline {
 
@@ -176,7 +201,7 @@ public:
   for_each(Fn fn) : fn_(fn) {}
 
   template <typename Container> decltype(auto) operator()(Container &&args) {
-    typedef typename std::result_of<Fn(typename Container::value_type &)>::type result_type;
+    typedef typename std::result_of<Fn(typename std::decay<Container>::type::value_type &)>::type result_type;
 
     if constexpr (std::is_same<result_type, void>::value) {
       // result type is void

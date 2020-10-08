@@ -13,7 +13,7 @@ public:
   for_each(Fn fn) : fn_(fn) {}
 
   template <typename Container> decltype(auto) operator()(Container &&args) {
-    typedef typename std::result_of<Fn(typename Container::value_type &)>::type result_type;
+    typedef typename std::result_of<Fn(typename std::decay<Container>::type::value_type &)>::type result_type;
 
     if constexpr (std::is_same<result_type, void>::value) {
       // result type is void

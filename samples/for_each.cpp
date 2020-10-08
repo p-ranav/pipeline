@@ -3,11 +3,8 @@
 using namespace pipeline;
 
 int main() {
+  auto print_values = [](const auto &v) { std::cout << v << "\n"; };
 
-  auto generate_input = fn([] { return std::vector<int>{1, 2, 3, 4, 5}; });
-
-  auto print_values = fn([](const auto &v) { std::cout << v << "\n"; });
-
-  auto pipeline = generate_input | for_each(print_values);
+  auto pipeline = from(std::vector<int>{1, 2, 3, 4, 5}) | for_each(print_values);
   pipeline();
 }
