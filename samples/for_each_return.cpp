@@ -3,7 +3,6 @@
 using namespace pipeline;
 
 int main() {
-
   auto to_string = [](const auto &v) { return std::to_string(v); };
 
   auto print_string = [](const auto &vec_of_strings) {
